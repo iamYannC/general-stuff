@@ -7,10 +7,9 @@ execute:
   message: false
 ---
 
-### The following document shows how aggregating a variable by averaging or summing its' components effect the correlation with another variable.
+The following document shows how aggregating a variable by averaging or summing its' components effect the correlation with another variable.
 
-```{r install-faux}
-#| echo: false
+{r install-faux}, echo=FALSE}
 
 require(faux)
 msg <- function(avg=cor_avg,sum=cor_sum){
@@ -20,13 +19,12 @@ msg <- function(avg=cor_avg,sum=cor_sum){
  They are the same."
 )
 }
-```
 
-First let's generate some fake data. Using `faux` we can generate correlated variables.
+First let's generate some fake data. Using faux we can generate correlated variables.
 
 Since I am using random correlations anyway, in this specific example, It doesn't really matter what is considered as X variable, and what is the Y variable.
 
-```{r generate-data}
+{r generate-data}
 set.seed(1)
 r <- sample(seq(-1,1,0.001), 6, replace = TRUE)
 
@@ -34,15 +32,12 @@ set.seed(2)
 X <- rnorm_multi(n = 1000,varnames = paste0('x',1:3),r = r[1:3])
 set.seed(3)
 Y <- rnorm_multi(n = 1000,varnames = paste0('y',1:3),r = r[4:6])
-```
 
-```{r show}
-#| echo: false
+{r show, echo=FALSE}
 cbind(X,Y)[1:3,]
 
-```
 
-```{r agg-average-summ}
+{r agg-average-summ}
 
 avg_X <- rowMeans(X)
 sum_X <- rowSums(X)
@@ -50,17 +45,15 @@ sum_X <- rowSums(X)
 avg_Y <- rowMeans(Y)
 sum_Y <- rowSums(Y)
 
-```
 
-```{r correlation}
+{r correlation}
 cor_avg <- cor(avg_X,avg_Y)
 
 cor_sum <- cor(sum_X,sum_Y)
 
 msg()
-```
 
-## Mathematical solution
+Mathematical solution
 
 Let's define the average and sum of a variable
 

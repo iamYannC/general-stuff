@@ -1,6 +1,8 @@
 ---
 title: "Dummy example on cracking the stock market" 
-format: gfm
+format:
+  html:
+    toc: true
 ---
 
 ```{r}

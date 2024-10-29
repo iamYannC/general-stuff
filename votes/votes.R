@@ -21,9 +21,8 @@ national <- function(k){
 # Data from https://boardsgenerator.cbs.gov.il/pages/WebParts/YishuvimPage.aspx?mode=Yeshuv#
 yesh <- readxl::read_xlsx("votes/yesh.xlsx",col_names = 
                             c("id", "name", "district", "district_2", "type", "municipal_status",
-                              "natural_region", "pop", "jews_others", "jews", "arabs","authority_cluster"),
-                          skip = 1
-)
+                              "natural_region", "pop", "jews_others", "jews", "arabs","authority_cluster")
+) %>% .[-c(1:2),]
 
 get_yeshuv <- function(yeshuv, k) {
   url <- paste0("https://votes", k, ".bechirot.gov.il/cityresults?cityID=", yeshuv)

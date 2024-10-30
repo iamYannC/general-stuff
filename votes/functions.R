@@ -95,4 +95,62 @@ voting_consistency <- function(party_id,pop_threshold = 0,n, no_filter = F ){
   
   tmp |> filter(id %in% ids)
 }
-#
+
+# Plot consistency in voting pattern for party_id
+  # in n most inconsistent villages
+  # with population size larger than pop_threshold
+plot_consistency <- function(party_id,n,pop_threshold,lwd = 1.5){
+  
+  national_txt <- "ארצי"
+  
+  df <- bind_rows(
+    ( national |> filter(id == party_id) |>
+        select(id,pct,knesset) %>%
+        mutate(SD_pct = sd(.$pct),
+               name = national_txt
+        )
+    ),
+    voting_consistency(party_id, n = n, pop_threshold = pop_threshold)
+  ) |> mutate(line = is.na(party))
+  
+  
+  # Here I'm assigning colors to each city,
+  # making sure that the national avg is gray
+  colors <- scales::hue_pal()(n + 1)
+  names(colors) <- unique(c(national_txt, df$name))
+  colors[national_txt] <- "gray50"
+  
+  x_discrete <- length(unique(df$knesset)) - 0.4 # just a twick to make the x axis nice
+  
+  df |> 
+    ggplot(aes(x = as.character(knesset),
+               y = pct,
+               group = id, color = name
+    )) +
+    geom_line(aes(linetype = line, alpha = !line),
+              lwd = lwd,show.legend = F) +
+    geom_point(show.legend = T) +
+    coord_cartesian(clip = 'on', xlim = c(1.5,x_discrete)) +
+    scale_linetype_manual(values = c(1,2)) +
+    scale_color_manual(values = colors) +
+    scale_alpha_manual(values = c(0.4,1)) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1, scale = 1)) +
+    labs(x = 'Knesset',
+         y = glue("Percentage of votes to **{party_id}**"),
+         title = glue::glue("Least {n} consistent villages *(Population > {scales::comma(pop_threshold)})* in voting patterns to **{party_id}**"),
+         caption = '*Data: gov.il, Election to Knesset 21<sup>st</sup> to 25<sup>th</sup>.*'
+    ) +
+    theme(axis.title.y = element_marquee(),
+          legend.text = element_text(size = 15),
+          legend.margin = margin(0),
+          plot.title = element_marquee(width = 1,
+                                       lineheight = .01,
+                                       margin = margin(0)),
+          plot.caption = element_marquee(hjust = 0, lineheight = 0.2)
+    ) +
+    guides(linetype = 'none', alpha = 'none', 
+           color = if (n <= 10) guide_legend(title = NULL,
+                                             direction = 'horizontal',
+                                             position = 'top') else 'none'
+    ) 
+}

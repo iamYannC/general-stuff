@@ -55,6 +55,8 @@ national <- map_dfr(knesset, national)
 colnames(national) <- c('party','id','mandate','pct','votes','knesset')
 national <- national |> mutate(pct = parse_number(pct), votes = parse_number(votes))
 
+('This will also take time...') |> cli::col_br_red() |> cat()
+
 # One big table with all yeshuvim, all years. voting patterns
 voting_patterns <- furrr::future_map_dfr(yesh[[1]],yeshuv_pattern_years,
                                          .progress =TRUE

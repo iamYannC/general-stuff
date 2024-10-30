@@ -68,13 +68,13 @@ voting_general <- furrr::future_map_dfr(yesh[[1]],yeshuv_general_years,
 )
 
 # Combine general data by Yeshuv and Knesset
-voting_patterns_with_pop <- voting_consistency('no_filter',n=Inf,pop_threshold = 0,no_filter = T) |> select(-1,-3,-5) |> 
+voting_general_with_pop <- voting_consistency('no_filter',n=Inf,pop_threshold = 0,no_filter = T) |> select(-1,-3,-5) |> 
   distinct() |> left_join(voting_general |> mutate(yeshuv = as.character(yeshuv)))
 
 
-walk2( list(voting_patterns_with_pop,
-            voting_patterns,
+walk2( list(voting_general_with_pop,
             voting_general,
+            voting_patterns,
             national # for now, dont include population data from cbs
             ),
        c('pattern_full_data','pattern','general','national'),

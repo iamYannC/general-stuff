@@ -6,7 +6,6 @@ library(marquee)
 # library(furrr) # library(readxl) # library(writexl)
 
 source('votes/functions.R')
-theme_set(theme_classic(base_size = 12))
 
 # Data from https://boardsgenerator.cbs.gov.il/pages/WebParts/YishuvimPage.aspx?mode=Yeshuv#
 yesh <- readxl::read_xlsx("votes/data/yesh.xlsx",col_names = 
@@ -16,10 +15,13 @@ yesh <- readxl::read_xlsx("votes/data/yesh.xlsx",col_names =
 
 knesset <- 21:25
 
-knesset_list <- map(knesset,\(x) map(yesh[[1]], \(y) get_yeshuv(y, x)),
-                    .progress = TRUE)
-# write_rds(knesset_list, "votes/knesset_list.rds") ||| knesset_list <- read_rds("votes/knesset_list.rds")
+('Once knesset_list ran, dont re-run. its heavy. load from rds') |> cli::col_red() |> cat()
 
+# knesset_list <- map(knesset,\(x) map(yesh[[1]], \(y) get_yeshuv(y, x)),
+#                     .progress = TRUE)
+# write_rds(knesset_list, "votes/knesset_list.rds") ||| 
+
+knesset_list <- read_rds("votes/knesset_list.rds")
 # Structure:
   # 5 items (knesset numbers 21 to 25)
     # 1285 items (yeshuvim)
@@ -65,25 +67,16 @@ voting_general <- furrr::future_map_dfr(yesh[[1]],yeshuv_general_years,
 
 # Combine general data by Yeshuv and Knesset
 voting_patterns_with_pop <- voting_consistency('no_filter',n=Inf,pop_threshold = 0,no_filter = T) |> select(-1,-3,-5) |> 
-  distinct() |> mutate(id = party_id) |> left_join(voting_general |> mutate(yeshuv = as.character(yeshuv)))
+  distinct() |> left_join(voting_general |> mutate(yeshuv = as.character(yeshuv)))
 
 
 walk2( list(voting_patterns_with_pop,
             voting_patterns,
             voting_general,
-            national
+            national # for now, dont include population data from cbs
             ),
        c('pattern_full_data','pattern','general','national'),
        \(df,name)
        writexl::write_xlsx(df,glue('votes/data/{name}.xlsx')
                            )
        )
-
-
-# toy example
-
-k_df |> filter(id == 'מחל') |> select(-1,-2) |> 
-  pivot_longer(-knesset) |> filter(value < 1e4) |> 
-  ggplot(aes(x = knesset, y = value, color = name)) + 
-  geom_line(aes(group = name))
-

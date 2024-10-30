@@ -1,0 +1,51 @@
+An R-like code to store english translations
+
+# ChatGPT translation for party names & ID -- 39 in total, based on Election 24
+{
+  party_name_eng <- c(
+    "Likud under the Leadership of Benjamin Netanyahu for Prime Minister",
+    "Yesh Atid under the Leadership of Yair Lapid",
+    "The Sephardic Torah Guardians Movement of the Late Rabbi Ovadia Yosef",
+    "Blue and White under the Leadership of Benny Gantz",
+    "Yamina under the Leadership of Naftali Bennett",
+    "Labor Party under the Leadership of Merav Michaeli",
+    "United Torah Judaism and Shabbat – Agudat Yisrael – Degel HaTorah",
+    "Yisrael Beiteinu under the Leadership of Avigdor Lieberman",
+    "Religious Zionism under the Leadership of Bezalel Smotrich",
+    "The Joint List (Hadash, Ta'al, Balad)",
+    "New Hope under the Leadership of Gideon Sa'ar for Prime Minister",
+    "Meretz – The Left of Israel",
+    "The United Arab List",
+    "The New Economy under the Leadership of Professor Yaron Zelekha",
+    "Rafa – Just Health under the Leadership of Doctor Aryeh Avni",
+    "The Pirates",
+    "You and I – The Israeli People’s Party",
+    "Hope for Change",
+    "The Social Explosion - Pensioners",
+    "Justice Reform – For Judicial System Reform",
+    "Tzomet – Independents, Farmers, Villages",
+    "Whole Nation Party – under the Leadership of Rabbi Haim Amsalem",
+    "New Order for Electoral and Governmental Reform in Israel under Adv. Avital Ofek",
+    "Kama – Advancement of the Status of the Individual",
+    "Noam Kolman, Liron Ofri, and Suli Wolf – The Impossible is Possible",
+    "The Jewish Heart under the Leadership of Eli Yosef",
+    "Ourselves – Independents and Liberals",
+    "Biblical Bloc Party",
+    "New World under the Leadership of Yoram Edri",
+    "The Partnership Alliance for National Unity led by Captain B. Shlayan",
+    "The Israelis",
+    "Shama Party under the Leadership of Naftali Goldman",
+    "Da'am – Green Economy One State",
+    "Social Leadership",
+    "Ma'an (Together) for a New Era",
+    "Arrow",
+    "\"We\" – under the Leadership of Adv. Mosh Hogeg",
+    "Human Dignity, under the Leadership of Adv. Arkady Pugach",
+    "Democratic – Freedom, Equality, and Mutual Responsibility"
+  )
+  
+  party_id_eng <- c("machal", "peh", "shas", "ken", "b", "emet", "g", "l", "t", "vda'am", 
+                    "t", "meretz", "im", "yaz", "r", "pfz", "kach", "ran", "y", "katz", 
+                    "tzatz", "raf", "kach", "n", "k", "ch", "tsi", "yak", "ni", "yin", 
+                    "z", "ki", "tz", "ir", "tzak", "tzaf", "ner", "yaf", "rak")
+  }

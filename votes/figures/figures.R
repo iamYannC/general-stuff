@@ -3,7 +3,7 @@ library(camcorder)
 gg_record(dir = 'votes/figures', device = 'png', width = 10, height = 6, dpi = 200)
 
 
-party_id <- 'פה'
+party_id <- 'מחל'
 n <- 10
 t <- 10000
 

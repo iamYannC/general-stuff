@@ -58,14 +58,17 @@ yeshuv_general_years <-function(yeshuv_id, knesset = 21:25){
   #' 
   #' Since the 4th column can be either numeric or character, there is some error handling
   list_k <- vector('list',length(knesset)) |> set_names(paste0('k',knesset))
+  
   for(k in paste0('k',knesset)){
+    
+    tmp <- knesset_list[[k]][[paste0('id',yeshuv_id)]][[1]]
     
     if(nrow(tmp)==0){
       next
     }
     
     list_k[[k]] <- 
-      knesset_list[[k]][[paste0('id',yeshuv_id)]][[1]] |> 
+      tmp |> 
       mutate(across(everything(),\(x) if (is.character(x))
         parse_number(x) else x))  
   }
@@ -73,9 +76,13 @@ yeshuv_general_years <-function(yeshuv_id, knesset = 21:25){
 }
 
 # Get consistency in voting pattern across all yeshuvim
-voting_consistency <- function(party_id,pop_threshold = 0,n ){
-  tmp <- 
-    voting_patterns |> filter(id == party_id) |>
+voting_consistency <- function(party_id,pop_threshold = 0,n, no_filter = F ){
+  if (!no_filter) {
+      tmp <- voting_patterns |> filter(id == party_id)
+      } else {
+      tmp <- voting_patterns
+      }
+  tmp <- tmp |>
     mutate(id = as.character(yeshuv)) |> 
     left_join(yesh) |> 
     filter(parse_number(pop) > pop_threshold) |>
@@ -88,3 +95,4 @@ voting_consistency <- function(party_id,pop_threshold = 0,n ){
   
   tmp |> filter(id %in% ids)
 }
+#

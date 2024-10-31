@@ -41,5 +41,14 @@ heb <- c('עם','ל','ג','מחל','אמת')
 map(heb, \(id) plot_consistency(id,8,t,lwd = 0.8))
 
 
+# Compare consistency between two yeshuvim (or more)
+yesh_heb <- c("אפרת"
+              ,"מג'דל שמס")
+plot_compare_yeshuvim(party_id = 'מחל',
+                      unique(yesh$yeshuv[yesh$name %in% yesh_heb]),
+                      show_national = T)
+
+
+
 # legacy html that doesnt work well:
 # title_ <- paste0("<span> Comarison of voting percentage to ", glue("**{party_id}** between "),"**{.", glue("{colors[df$name[df$yeshuv==yeshuvim[1]][1]]} {df$name[df$yeshuv==yeshuvim[1]][1]}"), "}** & **{.", glue("{colors[df$name[df$yeshuv==yeshuvim[2]][1]]} {df$name[df$yeshuv==yeshuvim[2]][1]}"), "}**</span>")

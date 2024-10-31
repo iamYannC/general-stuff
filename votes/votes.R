@@ -67,13 +67,19 @@ voting_general <- furrr::future_map_dfr(yesh[[1]],yeshuv_general_years,
                                          .progress =TRUE
 ) |> mutate(yeshuv = as.character(yeshuv))
 
+national_txt <- "ארצי"
+
 # Combine pattern data with population data
 voting_pattern_with_pop <-
-  voting_patterns |> left_join(
+  voting_patterns |> 
+  bind_rows(national) |> 
+  mutate(yeshuv = ifelse(complete.cases(mandate),"999",yeshuv)) |> 
+  left_join(
      (
        voting_consistency("no_filter", n = Inf, pop_threshold = 0, no_filter = T) |> select(-SD_pct)
      )
-   ) |> relocate(name,knesset)
+   ) |>mutate(name = ifelse(complete.cases(mandate), national_txt,name)) |> 
+    relocate(name,knesset)
   
 # Combine general data with population data
 voting_general_with_pop <- 

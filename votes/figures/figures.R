@@ -39,3 +39,7 @@ plot_consistency(party_id,10,t)
 heb <- c('עם','ל','ג','מחל','אמת')
 # check correlation between consistency and pop size and income gdp
 map(heb, \(id) plot_consistency(id,8,t,lwd = 0.8))
+
+
+# legacy html that doesnt work well:
+# title_ <- paste0("<span> Comarison of voting percentage to ", glue("**{party_id}** between "),"**{.", glue("{colors[df$name[df$yeshuv==yeshuvim[1]][1]]} {df$name[df$yeshuv==yeshuvim[1]][1]}"), "}** & **{.", glue("{colors[df$name[df$yeshuv==yeshuvim[2]][1]]} {df$name[df$yeshuv==yeshuvim[2]][1]}"), "}**</span>")

@@ -156,3 +156,78 @@ plot_consistency <- function(party_id,n,pop_threshold,lwd = 1.5){
     ) 
    
 }
+
+
+plot_compare_yeshuvim <- function(party_id, yeshuvim,lwd = 1.5,
+                                  show_national = FALSE){
+  
+  # Filter the data to the chosen cities (id) and the selected party
+  df <- 
+    voting_pattern_with_pop |> 
+    filter(id == party_id , (yeshuv %in% c(yeshuvim,show_national*999) )) |> 
+    mutate(knesset = as.character(knesset),
+           line = yeshuv == 999
+    )
+  
+  
+  # Here I'm assigning colors to each city,
+  # making sure that the national avg is gray
+  colors <- scales::hue_pal()(length(yeshuvim) + 1)
+  names(colors) <- unique(c(national_txt, df$name))
+  colors[national_txt] <- "gray50"  
+  
+  x_discrete <- length(unique(df$knesset)) - 0.4 # just a twick to make the x axis nice
+  
+  if(length(yeshuvim) == 2){
+    title_ <- glue("Comarison of voting percentage to **{party_id}** between **{df$name[df$yeshuv==yeshuvim[1]][1]} & {df$name[df$yeshuv==yeshuvim[2]][1]}**")
+  } else {
+    title_ <-glue("Comparison of voting percentage to **{party_id}**")
+  }
+  
+  
+  df |> ggplot(aes(
+    x = knesset,
+    y = pct,
+    group = name, color = name
+  )) +
+    geom_line(aes(linetype = line, alpha = !line),
+              lwd = lwd,show.legend = F) +
+    geom_point(show.legend = T) +
+    coord_cartesian(clip = 'on',
+                    xlim = c(1.5,x_discrete)) +
+    scale_linetype_manual(values = c(1,2)) +
+    scale_color_manual(values = colors) +
+    scale_alpha_manual(values = c(0.4,1)) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1, scale = 1)) +
+    labs(x = 'Knesset',
+         y = glue("Percentage of votes to **{party_id}**"),
+         title = title_,
+         caption = '*Data: gov.il, Election to Knesset 21<sup>st</sup> to 25<sup>th</sup>.*'
+    ) +
+    guides(linetype = 'none', alpha = 'none', 
+           color = if (length(yeshuvim) <= 10) guide_legend(title = NULL,
+                                                            direction = 'horizontal',
+                                                            position = 'top') else 'none'
+    ) +
+    theme(axis.title.y = element_marquee(),
+          legend.text = element_text(size = 15),
+          legend.key.width = unit(4, "mm"),
+          legend.key.size = unit(-10,'mm'),
+          legend.justification = 'left',
+          legend.margin = margin(t = 0, b = 0),  # Reduce top and bottom margins
+          plot.caption = element_marquee(hjust = 0,
+                                         lineheight = 0.2),
+          plot.margin = margin(t = 5, r = 5, b = 5, l = 5),
+          # plot.title.position = "plot",          # Align title with plot edges
+          plot.title = element_marquee(width = 1,
+                                       lineheight = 1.5,
+                                       margin = margin(b = 5)), # Reduce bottom margin of title
+          
+    ) 
+  
+}
+yesh_heb <- c("אפרת"
+              ,"מג'דל שמס")
+plot_compare_yeshuvim(party_id,
+                      unique(yesh$yeshuv[yesh$name %in% yesh_heb]),
+                      show_national = T)

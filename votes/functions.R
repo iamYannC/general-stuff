@@ -5,13 +5,14 @@ i_read_table <- function(url, class, k, yeshuv=NULL){
     html_table() %>%
     .[[1]] |>
     as_tibble() |>
-    mutate(knesset = k, yeshuv = yeshuv)
+    mutate(knesset = as.character(k), yeshuv = if(is.null(yeshuv)) yeshuv else as.character(yeshuv))
 }
 
 # Get national results by Knesset number (k)
-national_func <- function(k){
+national_func <- function(k,pattern = TRUE){
   url <- paste0("https://votes",k,".bechirot.gov.il/")
-  i_read_table(url, ".TableData", k)
+  class <- if(pattern) ".TableData" else ".ResultsSummary"
+  i_read_table(url, class, k)
 }
 
 # store election data for each yeshuv
@@ -37,16 +38,10 @@ yeshuv_pattern_years <-function(yeshuv_id, knesset = 21:25){
     if(nrow(tmp)==0){
       next
     }
-    # Needs to be converted to numeric values
-    
-    if(is.numeric(tmp[[4]])){
-      tmp <- tmp |> mutate(across(3, \(x) if (is.character(x))
-        parse_number(x) else x ))
-    } else{
-      tmp <- tmp |> mutate(across(3:4, \(x) if (is.character(x))
-        parse_number(x) else x))  
-    }
-    list_k[[k]] <- tmp
+    list_k[[k]] <- tmp |> mutate(across(pct:votes,\(x) as.numeric(str_remove_all(x, '[%,]'))),
+                                 knesset = as.character(knesset)
+                                 )
+     
   }
   return(list_k |> list_rbind())
 }
@@ -67,27 +62,25 @@ yeshuv_general_years <-function(yeshuv_id, knesset = 21:25){
       next
     }
     
-    list_k[[k]] <- 
-      tmp |> 
-      mutate(across(everything(),\(x) if (is.character(x))
-        parse_number(x) else x))  
+    list_k[[k]] <-
+      tmp |> mutate(across(everything(),\(x) as.numeric(str_remove_all(x, '[%,]'))),
+                    across(knesset:yeshuv, as.character))
   }
   return(list_k |> list_rbind())
 }
 
 # Get consistency in voting pattern across all yeshuvim
-voting_consistency <- function(party_id,pop_threshold = 0,n, no_filter = F ){
+voting_consistency <- function(data=voting_pattern, party_id,pop_threshold = 0,n, no_filter = F ){
   if (!no_filter) {
-      tmp <- voting_patterns |> filter(id == party_id)
+      tmp <- data |> filter(id == party_id)
       } else {
-      tmp <- voting_patterns
+      tmp <- data
       }
   tmp <- tmp |>
     left_join(yesh) |> 
-    filter(parse_number(pop) > pop_threshold) |>
+    filter(pop > pop_threshold) |>
     mutate(
       SD_pct = sd(pct),
-      pop = parse_number(pop),
       .by = yeshuv, .after = pct
     )
   yeshuvim <- tmp |> distinct(yeshuv,.keep_all=T) |> slice_max(SD_pct, n = n) |> pull(yeshuv)

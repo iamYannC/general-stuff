@@ -11,7 +11,8 @@ source('votes/functions.R')
 yesh <- readxl::read_xlsx("votes/data/yesh.xlsx",col_names = 
                             c("yeshuv", "name", "district", "district_2", "type", "municipal_status",
                               "natural_region", "pop", "jews_others", "jews", "arabs","authority_cluster")
-) %>% .[-c(1:2),]
+) %>% .[-c(1:2),] |> mutate(across(pop:arabs,\(x) parse_number(x, na = '-')),
+                            across(jews_others:arabs, \(x) ifelse(is.na(x),0,x)))
 
 knesset <- 21:25
 
@@ -49,55 +50,58 @@ for(k in 1:length(knesset_list)){
   }
 }
 
+
 # Get national results
 
-national <- map_dfr(knesset, national_func)
-colnames(national) <- c('party','id','mandate','pct','votes','knesset')
-national <- national |> mutate(pct = parse_number(pct), votes = parse_number(votes))
+national_pattern <- map_dfr(knesset, national_func)
+colnames(national_pattern) <- c('party','id','mandate','pct','votes','knesset')
+national_pattern <- national_pattern |> mutate(pct = parse_number(pct), votes = parse_number(votes))
+
+national_general <- map_dfr(knesset,\(k) national_func(k,F)) |>
+  mutate(across(everything(-knesset), parse_number))
+colnames(national_general) <- c('can_vote','votes','pct_vote','valid_votes','invalid_votes','knesset')
+
 
 ('This will also take time...') |> cli::col_br_red() |> cat()
 
+national_txt <- "ארצי"
+
+
 # One big table with all yeshuvim, all years. voting patterns
-voting_patterns <- furrr::future_map_dfr(yesh[[1]],yeshuv_pattern_years,
+voting_pattern <- furrr::future_map_dfr(yesh[[1]],yeshuv_pattern_years,
                                          .progress =TRUE
 )
+
+# Combine voting pattern data with population data
+voting_pattern <-
+  voting_pattern |> 
+  bind_rows(national_pattern) |> 
+  mutate(yeshuv = ifelse(complete.cases(mandate),"999",yeshuv)) |> 
+  left_join(yesh) |>
+  mutate(name = ifelse(complete.cases(mandate), national_txt,name)) |> 
+  relocate(name,knesset)
 
 # One big table with all yeshuvim, all years. general results
 voting_general <- furrr::future_map_dfr(yesh[[1]],yeshuv_general_years,
                                          .progress =TRUE
-) |> mutate(yeshuv = as.character(yeshuv))
+)
 
-national_txt <- "ארצי"
-
-# Combine pattern data with population data
-voting_pattern_with_pop <-
-  voting_patterns |> 
-  bind_rows(national) |> 
-  mutate(yeshuv = ifelse(complete.cases(mandate),"999",yeshuv)) |> 
-  left_join(
-     (
-       voting_consistency("no_filter", n = Inf, pop_threshold = 0, no_filter = T) |> select(-SD_pct)
-     )
-   ) |>mutate(name = ifelse(complete.cases(mandate), national_txt,name)) |> 
-    relocate(name,knesset)
-  
 # Combine general data with population data
-voting_general_with_pop <- 
-  voting_general |> left_join(
-    (
-      voting_consistency('no_filter',n=Inf,pop_threshold = 0,no_filter = T) |>
-      select(-party,-id,-pct,-SD_pct,-votes) |> 
-      distinct() 
-    )
-      )
-
+voting_general <-
+  voting_general |> 
+  bind_rows(national_general) |> 
+  mutate(yeshuv = ifelse(is.na(yeshuv),"999",yeshuv)) |> 
+  left_join(yesh) |>
+  mutate(name = ifelse(yeshuv == 999, national_txt,name)) |> 
+  relocate(name,knesset)
 
 walk2( list(
             voting_general,
-            voting_patterns,
-            national # for now, dont include population data from cbs
+            voting_pattern,
+            national_general,
+            national_pattern
             ),
-       c('voting_general','voting_pattern','national'),
+       c('voting_general','voting_pattern','national_general','national_pattern'),
        \(df,name)
        writexl::write_xlsx(df,glue('votes/data/{name}.xlsx')
                            )

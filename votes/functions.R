@@ -226,8 +226,3 @@ plot_compare_yeshuvim <- function(party_id, yeshuvim,lwd = 1.5,
     ) 
   
 }
-yesh_heb <- c("אפרת"
-              ,"מג'דל שמס")
-plot_compare_yeshuvim(party_id,
-                      unique(yesh$yeshuv[yesh$name %in% yesh_heb]),
-                      show_national = T)

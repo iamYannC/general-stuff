@@ -9,7 +9,7 @@ i_read_table <- function(url, class, k, yeshuv=NULL){
 }
 
 # Get national results by Knesset number (k)
-national <- function(k){
+national_func <- function(k){
   url <- paste0("https://votes",k,".bechirot.gov.il/")
   i_read_table(url, ".TableData", k)
 }
@@ -83,17 +83,16 @@ voting_consistency <- function(party_id,pop_threshold = 0,n, no_filter = F ){
       tmp <- voting_patterns
       }
   tmp <- tmp |>
-    mutate(id = as.character(yeshuv)) |> 
     left_join(yesh) |> 
     filter(parse_number(pop) > pop_threshold) |>
     mutate(
       SD_pct = sd(pct),
       pop = parse_number(pop),
-      .by = id, .after = pct
+      .by = yeshuv, .after = pct
     )
-  ids <- tmp |> distinct(id,.keep_all=T) |> slice_max(SD_pct, n = n) |> pull(id)
+  yeshuvim <- tmp |> distinct(yeshuv,.keep_all=T) |> slice_max(SD_pct, n = n) |> pull(yeshuv)
   
-  tmp |> filter(id %in% ids)
+  tmp |> filter(yeshuv %in% yeshuvim)
 }
 
 # Plot consistency in voting pattern for party_id
@@ -125,7 +124,7 @@ plot_consistency <- function(party_id,n,pop_threshold,lwd = 1.5){
   df |> 
     ggplot(aes(x = as.character(knesset),
                y = pct,
-               group = id, color = name
+               group = yeshuv, color = name
     )) +
     geom_line(aes(linetype = line, alpha = !line),
               lwd = lwd,show.legend = F) +
@@ -140,17 +139,20 @@ plot_consistency <- function(party_id,n,pop_threshold,lwd = 1.5){
          title = glue::glue("Least {n} consistent villages *(Population > {scales::comma(pop_threshold)})* in voting patterns to **{party_id}**"),
          caption = '*Data: gov.il, Election to Knesset 21<sup>st</sup> to 25<sup>th</sup>.*'
     ) +
-    theme(axis.title.y = element_marquee(),
-          legend.text = element_text(size = 15),
-          legend.margin = margin(0),
-          plot.title = element_marquee(width = 1,
-                                       lineheight = .01,
-                                       margin = margin(0)),
-          plot.caption = element_marquee(hjust = 0, lineheight = 0.2)
-    ) +
     guides(linetype = 'none', alpha = 'none', 
            color = if (n <= 10) guide_legend(title = NULL,
                                              direction = 'horizontal',
                                              position = 'top') else 'none'
+    ) +
+    theme(axis.title.y = element_marquee(),
+          legend.text = element_text(size = 15),
+          legend.key.width = unit(4, "mm"),
+          legend.key.size = unit(4,'mm'),
+          legend.justification = 'left',
+          plot.title = element_marquee(width = 1,
+                                       lineheight = .01,
+                                       margin = margin(0)),
+          plot.caption = element_marquee(hjust = 0, lineheight = 0.2)
     ) 
+   
 }

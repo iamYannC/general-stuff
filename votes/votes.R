@@ -9,7 +9,7 @@ source('votes/functions.R')
 
 # Data from https://boardsgenerator.cbs.gov.il/pages/WebParts/YishuvimPage.aspx?mode=Yeshuv#
 yesh <- readxl::read_xlsx("votes/data/yesh.xlsx",col_names = 
-                            c("id", "name", "district", "district_2", "type", "municipal_status",
+                            c("yeshuv", "name", "district", "district_2", "type", "municipal_status",
                               "natural_region", "pop", "jews_others", "jews", "arabs","authority_cluster")
 ) %>% .[-c(1:2),]
 
@@ -51,7 +51,7 @@ for(k in 1:length(knesset_list)){
 
 # Get national results
 
-national <- map_dfr(knesset, national)
+national <- map_dfr(knesset, national_func)
 colnames(national) <- c('party','id','mandate','pct','votes','knesset')
 national <- national |> mutate(pct = parse_number(pct), votes = parse_number(votes))
 
@@ -65,19 +65,33 @@ voting_patterns <- furrr::future_map_dfr(yesh[[1]],yeshuv_pattern_years,
 # One big table with all yeshuvim, all years. general results
 voting_general <- furrr::future_map_dfr(yesh[[1]],yeshuv_general_years,
                                          .progress =TRUE
-)
+) |> mutate(yeshuv = as.character(yeshuv))
 
-# Combine general data by Yeshuv and Knesset
-voting_general_with_pop <- voting_consistency('no_filter',n=Inf,pop_threshold = 0,no_filter = T) |> select(-1,-3,-5) |> 
-  distinct() |> left_join(voting_general |> mutate(yeshuv = as.character(yeshuv)))
+# Combine pattern data with population data
+voting_pattern_with_pop <-
+  voting_patterns |> left_join(
+     (
+       voting_consistency("no_filter", n = Inf, pop_threshold = 0, no_filter = T) |> select(-SD_pct)
+     )
+   ) |> relocate(name,knesset)
+  
+# Combine general data with population data
+voting_general_with_pop <- 
+  voting_general |> left_join(
+    (
+      voting_consistency('no_filter',n=Inf,pop_threshold = 0,no_filter = T) |>
+      select(-party,-id,-pct,-SD_pct,-votes) |> 
+      distinct() 
+    )
+      )
 
 
-walk2( list(voting_general_with_pop,
+walk2( list(
             voting_general,
             voting_patterns,
             national # for now, dont include population data from cbs
             ),
-       c('pattern_full_data','pattern','general','national'),
+       c('voting_general','voting_pattern','national'),
        \(df,name)
        writexl::write_xlsx(df,glue('votes/data/{name}.xlsx')
                            )

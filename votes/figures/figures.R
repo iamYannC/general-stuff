@@ -1,6 +1,6 @@
 source('votes/votes.R')
-library(camcorder)
-gg_record(dir = 'votes/figures', device = 'png', width = 10, height = 6, dpi = 200)
+# library(camcorder)
+# gg_record(dir = 'votes/figures', device = 'png', width = 10, height = 6, dpi = 200)
 theme_set(theme_classic(base_size = 12))
 
 party_id <- 'מחל'
@@ -25,8 +25,8 @@ voting_consistency(party_id,n=n,pop_threshold = t) |>
     y = NULL, x = glue::glue("Standard Deviation in voting patterns to **{party_id}**"),
     caption = '*Data: gov.il, Election to Knesset 21<sup>st</sup> to 25<sup>th</sup>.*'
   ) +
-  # scale_color_manual(values =  c('darkred','navyblue'))+
-  theme(plot.title = marquee::element_marquee(width = 1,
+  theme(
+    plot.title = marquee::element_marquee(width = 1,
                                               lineheight = .95),
         plot.caption = marquee::element_marquee(hjust = 0, lineheight = 0.2),
         axis.title.x =  marquee::element_marquee(hjust = .5,lineheight = 0) ,
@@ -34,7 +34,7 @@ voting_consistency(party_id,n=n,pop_threshold = t) |>
   )
 
 
-plot_consistency(party_id,n,t)
+plot_consistency(party_id,10,t)
 
 heb <- c('עם','ל','ג','מחל','אמת')
 # check correlation between consistency and pop size and income gdp

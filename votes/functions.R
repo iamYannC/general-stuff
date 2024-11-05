@@ -1,5 +1,22 @@
-# Read the tables from the election website for each Knesset (k) and village (yeshuv)
+
+# LOAD AND CLEAN DATA -----------------------------------------------------
+
 i_read_table <- function(url, class, k, yeshuv=NULL){
+  #' Scrape and return table from a URL
+  #' 
+  #' This function scrapes a table from a given URL and returns it as a tibble.
+  #' It also adds columns for the Knesset and the village, if specified.
+  #' @param url Character. The URL to scrape data from.
+  #' @param class Character. The HTML class of the table to scrape.
+  #' @param k Character. The Knesset identifier.
+  #' @param yeshuv Character. The village identifier. Default is NULL.
+  #' 
+  #' @return A tibble containing the scraped table with additional columns for Knesset and village.
+  #' 
+  #' @examples
+  #' i_read_table(url = "https://votes21.bechirot.gov.il/",class = ".TableData",k = "21")
+  
+  
   read_html(url) |>
     html_nodes(class) |>
     html_table() %>%
@@ -8,8 +25,21 @@ i_read_table <- function(url, class, k, yeshuv=NULL){
     mutate(knesset = as.character(k), yeshuv = if(is.null(yeshuv)) yeshuv else as.character(yeshuv))
 }
 
-# Get national results by Knesset number (k)
 national_func <- function(k,pattern = TRUE){
+  #' Get national election results by Knesset number
+  #'
+  #' This function retrieves national election results for a given Knesset number.
+  #' It constructs the URL based on the provided Knesset number and scrapes the
+  #' relevant data using the `i_read_table` function.
+  #'
+  #' @param k Character. The Knesset number.
+  #' @param pattern Logical. If TRUE, use ".TableData" class; otherwise, use ".ResultsSummary" class. Default is TRUE.
+  #'
+  #' @return A tibble containing the national election results.
+  #'
+  #' @examples
+  #' national_func("23")
+  
   url <- paste0("https://votes",k,".bechirot.gov.il/")
   class <- if(pattern) ".TableData" else ".ResultsSummary"
   i_read_table(url, class, k)
@@ -28,9 +58,21 @@ get_yeshuv <- function(yeshuv, k) {
 
 # Get yeshuv pattern across the years (can be modified to specific knesset)
 yeshuv_pattern_years <-function(yeshuv_id, knesset = 21:25){
-  #' Get voting pattern across the years for a specific yeshuv
+  #' Store election data for each yeshuv
+  #'
+  #' This function retrieves and stores election data for a given village (yeshuv) and Knesset number.
+  #' It constructs the URL based on the provided Knesset number and village ID, and scrapes the relevant data using the `i_read_table` function.
   #' 
-  #' Since the 4th column can be either numeric or character, there is some error handling
+  #' @param yeshuv Character. The village identifier. 
+  #' @param k Character. The Knesset number.
+  #' 
+  #' @return A list containing two tibbles: general election data and pattern election data for the specified village.
+  #' 
+  #' @examples 
+  #' get_yeshuv(5000, 23)
+  #' get_yeshuv(5000) # For all Knesset elections.
+  
+  
   list_k <- vector('list',length(knesset)) |> set_names(paste0('k',knesset))
   for(k in paste0('k',knesset)){
     
@@ -50,8 +92,18 @@ yeshuv_pattern_years <-function(yeshuv_id, knesset = 21:25){
 # Get yeshuv general across the years (can be modified to specific knesset)
 yeshuv_general_years <-function(yeshuv_id, knesset = 21:25){
   #' Get voting results across the years for a specific yeshuv
-  #' 
-  #' Since the 4th column can be either numeric or character, there is some error handling
+  #'
+  #' This function retrieves voting results across different years for a specific yeshuv (village).
+  #' It constructs a list of tibbles containing the election data for each specified Knesset number,
+  #' and combines them into a single tibble.
+  #'
+  #' @param yeshuv_id Character. The identifier of the yeshuv.
+  #' @param knesset Numeric vector. The range of Knesset numbers to retrieve data for. Default is 21:25.
+  #'
+  #' @return A tibble containing the voting results for the specified yeshuv across the specified Knesset numbers.
+  #'
+  #' @examples
+  #' yeshuv_general_years(5000)
   list_k <- vector('list',length(knesset)) |> set_names(paste0('k',knesset))
   
   for(k in paste0('k',knesset)){
@@ -68,6 +120,11 @@ yeshuv_general_years <-function(yeshuv_id, knesset = 21:25){
   }
   return(list_k |> list_rbind())
 }
+
+
+
+
+# ANALYSIS ----------------------------------------------------------------
 
 # Get consistency in voting pattern across all yeshuvim
 voting_consistency <- function(data=voting_pattern, party_id,pop_threshold = 0,n, no_filter = F ){
@@ -87,6 +144,9 @@ voting_consistency <- function(data=voting_pattern, party_id,pop_threshold = 0,n
   
   tmp |> filter(yeshuv %in% yeshuvim)
 }
+
+
+# PLOT --------------------------------------------------------------------
 
 # Plot consistency in voting pattern for party_id
   # in n most inconsistent villages

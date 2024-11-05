@@ -79,7 +79,14 @@ voting_pattern <-
   mutate(yeshuv = ifelse(complete.cases(mandate),"999",yeshuv)) |> 
   left_join(yesh) |>
   mutate(name = ifelse(complete.cases(mandate), national_txt,name)) |> 
-  relocate(name,knesset)
+  relocate(name,knesset) |> 
+  # Enrich pattern data with yeshuv-party-knesset level SD, which is constant for the same party and yeshuv across Knesset (up to K duplicayes: K = number of Knesset),
+  # And with the difference in percentage of votes from the previous Knesset.
+  mutate(SD_pct = sd(pct),
+         diff_pct = pct - lag(pct,1,default = first(pct)),
+         .by = c(yeshuv,id),
+         .after = pct) |>  arrange(name,id,knesset)
+
 
 # One big table with all yeshuvim, all years. general results
 voting_general <- furrr::future_map_dfr(yesh[[1]],yeshuv_general_years,

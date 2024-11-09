@@ -6,6 +6,9 @@ library(marquee)
 # library(furrr) # library(readxl) # library(writexl)
 
 source('votes/functions.R')
+load_xlsx <- T
+
+# CBS DATA ----------------------------------------------------------------
 
 # Data from https://boardsgenerator.cbs.gov.il/pages/WebParts/YishuvimPage.aspx?mode=Yeshuv#
 yesh <- readxl::read_xlsx("votes/data/yesh.xlsx",col_names = 
@@ -16,7 +19,7 @@ yesh <- readxl::read_xlsx("votes/data/yesh.xlsx",col_names =
 
 knesset <- 21:25
 
-('Once knesset_list ran, dont re-run. its heavy. load from rds') |> cli::col_red() |> cat()
+('Once knesset_list ran, dont re-run. its heavy. load from rds\n') |> cli::col_red() |> cat()
 
 # knesset_list <- map(knesset,\(x) map(yesh[[1]], \(y) get_yeshuv(y, x)),
 #                     .progress = TRUE)
@@ -50,7 +53,11 @@ for(k in 1:length(knesset_list)){
   }
 }
 
+# VOTES DATA --------------------------------------------------------------
 
+national_txt <- 'All'
+
+if(!load_xlsx){
 # Get national results
 
 national_pattern <- map_dfr(knesset, national_func)
@@ -62,10 +69,7 @@ national_general <- map_dfr(knesset,\(k) national_func(k,F)) |>
 colnames(national_general) <- c('can_vote','votes','pct_vote','valid_votes','invalid_votes','knesset')
 
 
-('This will also take time...') |> cli::col_br_red() |> cat()
-
-national_txt <- "ארצי"
-
+('This will also take time...\n') |> cli::col_br_red() |> cat()
 
 # One big table with all yeshuvim, all years. voting patterns
 voting_pattern <- furrr::future_map_dfr(yesh[[1]],yeshuv_pattern_years,
@@ -102,14 +106,43 @@ voting_general <-
   mutate(name = ifelse(yeshuv == 999, national_txt,name)) |> 
   relocate(name,knesset)
 
-walk2( list(
-            voting_general,
-            voting_pattern,
-            national_general,
-            national_pattern
-            ),
-       c('voting_general','voting_pattern','national_general','national_pattern'),
-       \(df,name)
-       writexl::write_xlsx(df,glue('votes/data/{name}.xlsx')
-                           )
-       )
+
+# Trnalsations to english
+id_tbl <- tibble(
+  id_eng = c(
+    "Emet", "Etz", "B", "G", "D", "Daam", "Wadaam", "Um", "Z", "Zi", "Zach", "Zak", "Zan", "Zan", "Zatz", 
+    "T", "Tav", "Y", "Yaz", "Yin", "Yin", "Yif", "Yitz", "Yik", "Yir", "Kach", "Kachak", "Kaf", "Kafi", "Kach", 
+    "Ken", "Kaf", "L", "Mahal", "Meretz", "N", "Nach", "Nan", "Nun", "Nez", "Nai", "Nach", "Naf", "Natz", "Nak", 
+    "Nir", "Am", "P", "Pez", "Piy", "Pach", "Pan", "Patz", "Peh", "Tz", "Tzaz", "Tzai", "Tz", "Tzi", "Tzak", 
+    "Tzan", "Tzaf", "Tzak", "K", "Kai", "Kach", "Ken", "Kan", "Kaf", "Katz", "R", "Raz", "Ran", "Raf", "Rak", 
+    "Shas", "Tav"
+  ),
+  id = unique(voting_pattern$id)
+) 
+
+rm(national_general, national_pattern)
+
+} else{
+  ('Loading existing, pre-proccessed data\n') |> cli::col_magenta() |> cat()
+  
+  voting_pattern <- readxl::read_xlsx("votes/data/voting_pattern.xlsx")
+  voting_general <- readxl::read_xlsx("votes/data/voting_general.xlsx")
+}
+
+# SAVE --------------------------------------------------------------------
+
+# If i didnt load xlsx, probably want to save it
+if(!load_xlsx){
+  walk2( list(
+    voting_general,
+    voting_pattern
+  ),
+  c('voting_general','voting_pattern'),
+  \(df,name)
+  writexl::write_xlsx(df,glue('votes/data/{name}.xlsx')
+  )
+  )
+  
+}
+('Done!\n') |> cli::bg_br_green() |> cli::col_black() |>  cat()
+

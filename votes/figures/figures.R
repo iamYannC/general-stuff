@@ -52,3 +52,25 @@ plot_compare_yeshuvim(party_id = 'מחל',
 
 # legacy html that doesnt work well:
 # title_ <- paste0("<span> Comarison of voting percentage to ", glue("**{party_id}** between "),"**{.", glue("{colors[df$name[df$yeshuv==yeshuvim[1]][1]]} {df$name[df$yeshuv==yeshuvim[1]][1]}"), "}** & **{.", glue("{colors[df$name[df$yeshuv==yeshuvim[2]][1]]} {df$name[df$yeshuv==yeshuvim[2]][1]}"), "}**</span>")
+
+
+# Plot invalid votes, actual votes and their correlation.
+voting_general |> 
+  filter(votes > 0 & complete.cases(votes)) |> drop_na(district_2) |>
+  reframe(
+    can_vote = sum(can_vote),
+    votes = sum(votes),
+    invalid_votes = sum(invalid_votes),
+    pct_invalid = invalid_votes/votes,
+    pct_actual = votes/can_vote,
+    .by = district_2
+  ) %>% {
+    # ggplot(.,aes(fct_reorder(district_2,pct_invalid),x = pct_invalid)) + geom_col()+
+    # coord_cartesian(xlim = c(min(.[['pct_invalid']]),max(.[['pct_invalid']])))
+    
+    ggplot(.,aes(fct_reorder(district_2,pct_actual), x= pct_actual)) + geom_col() +
+      coord_cartesian(xlim = c(min(.[['pct_actual']]),max(.[['pct_actual']])))
+    
+    # ggplot(.,aes(pct_invalid,pct_actual)) + geom_point() + geom_smooth(method = 'lm',se = F) +
+    #     ggrepel::geom_text_repel(aes(label = district_2),box.padding = 0.5) 
+  }

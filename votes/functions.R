@@ -153,7 +153,7 @@ voting_consistency <- function(data=voting_pattern, party_id,pop_threshold = 0,n
   # with population size larger than pop_threshold
 plot_consistency <- function(party_id,n,pop_threshold,lwd = 1.5){
   
-  national_txt <- "ארצי"
+  national_txt <- 'All'
   
   df <- bind_rows(
     ( national |> filter(id == party_id) |>
@@ -278,4 +278,120 @@ plot_compare_yeshuvim <- function(party_id, yeshuvim,lwd = 1.5,
           
     ) 
   
+}
+
+plot_change_yeshuv_multy <- function(df = voting_pattern,
+                                     party_id, n = Inf,
+                                     pop_threshold = 5000,
+                                     knesset_= c(21,25),
+                                     filter_district = NULL, lwd = 1.5, hide = NULL
+){
+  # IT FILTERS FOR BEER SHEBA! #
+  
+  max_pop <- df |>
+    filter(knesset %in% knesset_,
+           (id %in% party_id | id_eng %in% party_id),
+           if( !is.null(filter_district) ){ district_2 %in% filter_district} else {TRUE} # hack to filter district only if provided (or value is not ALl if it goes to shiny..)
+    ) |> pull(pop) |> max(na.rm = T)
+  
+  pop_threshold <- ifelse(pop_threshold > max_pop, round(max_pop * 0.9),
+                          pop_threshold
+  )
+  
+  df <-  
+    df |>
+    filter(knesset %in% knesset_,
+           pop > pop_threshold,
+           (id %in% party_id | id_eng %in% party_id),
+           if( !is.null(filter_district) ){ district_2 %in% filter_district} else {TRUE} # hack to filter district only if provided (or value is not ALl if it goes to shiny..)
+    ) |> 
+    mutate(pct_diff = last(pct) - first(pct),
+           .by = c(yeshuv,id), .after = pct) |> 
+    mutate(more_votes = pct_diff > 0, .after = pct_diff)
+  
+  names_top_n <- df |> distinct(name,pop) |> slice_max(pop, n = n, with_ties = F) |> pull(name)
+  
+  
+  df_flt <- df |> filter(name %in% names_top_n)
+  
+  
+  df_start <- df_flt |> filter(knesset == min(knesset)) |> 
+    mutate(name = ifelse(row_number() %% 2 == 1,
+                         name, NA
+    ),.by = id)
+  
+  df_end <- df_flt |>
+    filter(knesset == max(knesset)) |> 
+    mutate(name = ifelse(row_number() %% 2 == 0,
+                         name, NA
+    ),.by = id)
+  # Here I'm assigning colors to each city based on change in pct to that party
+  colors <- c('seagreen','orange3')
+  if(!is.null(hide)){
+    if(hide == 'positive'){
+      colors <- c('grey70', 'orange3')
+    } else if(hide == 'negative'){
+      colors <- c('seagreen', 'grey70')
+    }
+  }
+  
+  x_discrete <- length(unique(df$knesset)) - 0.45 # just a twick to make the x axis nice
+  
+  if(length(party_id) == 1){
+    title_ <- glue::glue("Changes in voting to **{party_id}** *(Population > {scales::comma(pop_threshold)})*.")
+    facets <- NULL
+    y_axs_lab <- glue("Percentage of votes to **{party_id}**")
+  } else{
+    title_ <- glue::glue("Changes in voting to multiple parties *(Population > {scales::comma(pop_threshold)})*.")
+    facets <- facet_wrap(vars(id),scales = 'free')
+    y_axs_lab <- "Percentage of votes"
+  }
+  
+  
+  static_gg <-  
+    df_flt |> 
+    ggplot(aes(x = as.character(knesset),
+               y = pct,data_id = yeshuv,
+               group = yeshuv, color = more_votes
+    )) +
+    ggiraph::geom_line_interactive(lwd = lwd,show.legend = F
+    ) +
+    geom_point(show.legend = F) +
+    ggrepel::geom_text_repel(data = df_start,
+                             aes(label = name),
+                             nudge_x = -0.7,
+                             direction = 'y',
+                             size = 5,
+                             nudge_y = 0.5,
+                             hjust = 1
+    ) +
+    ggrepel::geom_text_repel(data = df_end,
+                             aes(label = name),
+                             nudge_x = 190.4,
+                             direction = 'y',
+                             size = 5,
+                             nudge_y = 0.5,
+                             hjust = 0
+    ) +
+    facets +
+    coord_cartesian(clip = 'on', xlim = c(1.5,x_discrete)) +
+    scale_color_manual(breaks = c(T,F), values = colors) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1, scale = 1)) +
+    labs(x = 'Knesset', y = y_axs_lab, title = title_,
+         caption = '*Data: gov.il, Election to Knesset 21<sup>st</sup> to 25<sup>th</sup>.*'
+    ) +
+    guides(linetype = 'none', alpha = 'none', color = 'none'
+    ) +
+    theme(axis.title.y = element_marquee(),
+          legend.text = element_text(size = 15),
+          legend.key.width = unit(4, "mm"),
+          legend.key.size = unit(4,'mm'),
+          legend.justification = 'left',
+          plot.title = element_marquee(width = 1,
+                                       # lineheight = 1,
+                                       margin = margin(0)),
+          plot.caption = element_marquee(hjust = 0, lineheight = 0.2)
+    ) |> suppressWarnings()
+  return(static_gg)
+  # ggiraph::girafe(ggobj = static_gg) |> ggiraph::girafe_options(ggiraph::opts_hover(css = "background-color: #FF0000;"))
 }

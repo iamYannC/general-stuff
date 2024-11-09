@@ -161,19 +161,24 @@ def download_video(url, output_path=None, audio_only=False):
 ### Implementation
 
 # Pick a playlist
-playlist = "https://www.youtube.com/playlist?list=PLCUPRQ-QgeNXkU6urzEqcgjgPQdpQTbu3"
+playlist = "https://www.youtube.com/playlist?list=PLdUGA0NFIvcAUO-EPC4xu-1cPr4vNu_hD"
 
 # Output directory
-output_dir = r"C:\Users\97253\Documents\Software\Python\yotube\nadine"
+output_dir = r"C:\Users\97253\Documents\Software\Python\yotube\1q84"
 
 # Get video links from a playlist
 my_vids = list(set(videos_from_playlist(playlist)))
 
 #  Download a specific video
-# download_video('https://www.youtube.com/watch?v=1vrEljMfXYo',output_dir,True)
+# download_video('https://www.youtube.com/watch?v=5QLo4jBbgMg',audio_only = False)
 
 # Loop over a list of videos
-for vid in my_vids[9:len(my_vids)]:
-    print(f"Downloading video no. {my_vids.index(vid)+1} out of {len(my_vids)}")
+# for vid in my_vids):
+#   print(f"Downloading video no. {my_vids.index(vid)+1} out of {len(my_vids)}")
+#   download_video(vid, output_dir, audio_only=True)
+
+
+# A better version:
+for i, vid in enumerate(my_vids):
+    print(f"Downloading video no. {i + 1} out of {len(my_vids)}")
     download_video(vid, output_dir, audio_only=True)
-   

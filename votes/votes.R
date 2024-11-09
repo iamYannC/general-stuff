@@ -107,7 +107,7 @@ voting_general <-
   relocate(name,knesset)
 
 
-# Trnalsations to english
+# Transnationals to english
 id_tbl <- tibble(
   id_eng = c(
     "Emet", "Etz", "B", "G", "D", "Daam", "Wadaam", "Um", "Z", "Zi", "Zach", "Zak", "Zan", "Zan", "Zatz", 
@@ -119,7 +119,7 @@ id_tbl <- tibble(
   ),
   id = unique(voting_pattern$id)
 ) 
-
+voting_pattern <- voting_pattern |> left_join(id_tbl) |> relocate(id_eng, .after = id)
 rm(national_general, national_pattern)
 
 } else{

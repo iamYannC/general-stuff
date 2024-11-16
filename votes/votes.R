@@ -125,7 +125,7 @@ if(!load_xlsx){
 } else{
   ('Loading existing, pre-proccessed data\n') |> cli::col_magenta() |> cat()
   
-  voting_pattern <- readxl::read_xlsx("voting_pattern.xlsx")
+  voting_pattern <- readxl::read_xlsx("votes/data/voting_pattern.xlsx")
   voting_general <- readxl::read_xlsx("votes/data/voting_general.xlsx")
 }
 

@@ -1,15 +1,41 @@
 from pytube import YouTube
+import requests
 import sys
 import os
 from tqdm import tqdm
 import re
 
-def get_video_id(url):
-    """Extract video ID from YouTube URL"""
-    pattern = r'(?:v=|\/)([0-9A-Za-z_-]{11}).*'
-    match = re.search(pattern, url)
-    return match.group(1) if match else None
+    ### Functions
+# Extract video IDs from a YouTube playlist
+def videos_from_playlist(url):
+    # Get the page content
+    page = requests.get(url).text
+    
+    # Pattern to match YouTube video IDs
+    pattern = r"watch\?v=([a-zA-Z0-9_-]{11})"
+    
+    # Extract all matches
+    video_ids = re.findall(pattern, page)
+    
+    # Create full URLs
+    video_urls = ["https://www.youtube.com/watch?v=" + vid for vid in video_ids]
+    
+    return video_urls
 
+  
+# Get file name
+def sanitize_filename(title):
+    """
+    Convert title to a safe filename by removing invalid characters.
+    """
+    # Remove invalid filename characters
+    invalid_chars = '<>:"/\\|?*'
+    filename = ''.join(char for char in title if char not in invalid_chars)
+    # Replace spaces with underscores and limit length
+    filename = filename.replace(' ', '_')[:100]  # Limit length to 100 chars
+    return filename
+
+# Download video
 def download_video(url, output_path=None, audio_only=False):
     """
     Download a YouTube video or audio with progress tracking and improved error handling.
@@ -47,9 +73,8 @@ def download_video(url, output_path=None, audio_only=False):
             if not stream:
                 raise Exception("No audio streams found")
             
-            # Generate safe filename for audio
-            video_id = get_video_id(url)
-            safe_filename = f"{video_id}_audio.mp3"
+            # Generate safe filename for audio using title
+            safe_filename = f"{sanitize_filename(yt.title)}.mp3"
             
         else:
             # Get the highest resolution stream with both video and audio
@@ -108,7 +133,7 @@ def download_video(url, output_path=None, audio_only=False):
                         'preferredcodec': 'mp3',
                         'preferredquality': '192',
                     }],
-                    'outtmpl': os.path.join(output_path or '', '%(id)s_audio.%(ext)s'),
+                    'outtmpl': os.path.join(output_path or '', '%(title)s.%(ext)s'),
                 })
             else:
                 ydl_opts.update({
@@ -119,7 +144,6 @@ def download_video(url, output_path=None, audio_only=False):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
                 print(f"\nDownload completed using yt-dlp! File saved in {output_path}")
-                
         except Exception as e2:
             print(f"Both methods failed. Final error: {str(e2)}")
             print("\nTroubleshooting tips:")
@@ -133,17 +157,28 @@ def download_video(url, output_path=None, audio_only=False):
             print("4. Verify that the URL is correct")
             sys.exit(1)
 
-if __name__ == "__main__":
-    # First install required packages:
-    # pip install pytube yt-dlp tqdm
-    # Also install ffmpeg for audio conversion
-    
-    # Example usage
-    video_url = "https://www.youtube.com/watch?v=rxhKrtb3XsE"
-    output_dir = "downloads"  # Optional: specify output directory
-    
-    # For video (default):
-    download_video(video_url, audio_only=True)
-    
-    # For audio only:
-    # download_video(video_url, output_dir, audio_only=True)
+
+### Implementation
+
+# Pick a playlist
+playlist = "https://www.youtube.com/playlist?list=PLdUGA0NFIvcAUO-EPC4xu-1cPr4vNu_hD"
+
+# Output directory
+output_dir = r"C:\Users\97253\Documents\Software\Python\yotube\1q84"
+
+# Get video links from a playlist
+my_vids = list(set(videos_from_playlist(playlist)))
+
+#  Download a specific video
+# download_video('https://www.youtube.com/watch?v=5QLo4jBbgMg',audio_only = False)
+
+# Loop over a list of videos
+# for vid in my_vids):
+#   print(f"Downloading video no. {my_vids.index(vid)+1} out of {len(my_vids)}")
+#   download_video(vid, output_dir, audio_only=True)
+
+
+# A better version:
+for i, vid in enumerate(my_vids):
+    print(f"Downloading video no. {i + 1} out of {len(my_vids)}")
+    download_video(vid, output_dir, audio_only=True)

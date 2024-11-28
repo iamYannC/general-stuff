@@ -1,0 +1,1 @@
+# learn nn from https://skeydan.github.io/Deep-Learning-and-Scientific-Computing-with-R-torch/image_classification_1.html#fnref1

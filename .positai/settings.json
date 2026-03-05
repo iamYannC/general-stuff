@@ -1,0 +1,31 @@
+{
+  "permission": {
+    "bash": {
+      "*": "allow",
+      "rm -rf *": "ask",
+      "rm -f *": "ask",
+      "rm --force *": "ask",
+      "git rm *": "ask",
+      "git rm -r *": "ask",
+      "git * --force*": "ask",
+      "git * --hard*": "ask",
+      "git push --force*": "ask",
+      "git reset --hard*": "ask",
+      "git clean -f*": "ask",
+      "git clean -fd*": "ask",
+      "git clean -fx*": "ask"
+    },
+    "webfetch": {
+      "*": "allow"
+    },
+    "executeCode": {
+      "*": "allow"
+    },
+    "list": {
+      "*": "allow"
+    },
+    "read": {
+      "*": "allow"
+    }
+  }
+}

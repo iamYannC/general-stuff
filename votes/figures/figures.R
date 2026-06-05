@@ -3,11 +3,15 @@ source('votes/votes.R')
 # gg_record(dir = 'votes/figures', device = 'png', width = 10, height = 6, dpi = 200)
 theme_set(theme_classic(base_size = 12))
 
-party_id <- 'מחל'
+party_id_eng <- 'Mahal'
+party_id_heb <- voting_pattern$id[voting_pattern$id_eng %in% party_id_eng] |> unique()
 n <- 10
-t <- 10000
+t <- 500
 
-voting_consistency(party_id,n=n,pop_threshold = t) |>
+voting_pattern |> 
+  filter(id_eng %in% party_id_eng, pop > t) |> 
+  distinct(name,SD_pct,pop) |>
+  slice_max(SD_pct,n = n) |>
   ggplot(aes(y = fct_reorder(name,SD_pct),
              x = SD_pct,
   )) +
@@ -20,9 +24,9 @@ voting_consistency(party_id,n=n,pop_threshold = t) |>
     
   ) +
   labs(
-    title = glue::glue("Least {n} consistent villages *(Population > {scales::comma(t)})* in voting patterns to **{party_id}**
+    title = glue::glue("Least {n} consistent villages *(Population > {scales::comma(t)})* in voting patterns to **{party_id_heb}**
                        Dot size represents population size"),
-    y = NULL, x = glue::glue("Standard Deviation in voting patterns to **{party_id}**"),
+    y = NULL, x = glue::glue("Standard Deviation in voting patterns to **{party_id_heb}**"),
     caption = '*Data: gov.il, Election to Knesset 21<sup>st</sup> to 25<sup>th</sup>.*'
   ) +
   theme(
@@ -74,3 +78,31 @@ voting_general |>
     # ggplot(.,aes(pct_invalid,pct_actual)) + geom_point() + geom_smooth(method = 'lm',se = F) +
     #     ggrepel::geom_text_repel(aes(label = district_2),box.padding = 0.5) 
   }
+
+# correlation between sd_pct and pct_actual
+# i think it will be negative
+df.tmp <- 
+voting_pattern |> drop_na(SD_pct) |> filter(SD_pct > 0,pop > quantile(pop,0.5,na.rm = T)) |> 
+  reframe(name,yeshuv,district,
+          SD_pct = mean(SD_pct,na.rm = T),
+          .by = name) |> 
+  left_join(
+    (voting_general |>
+       reframe(
+         can_vote = mean(can_vote),
+         votes = mean(votes),
+         pct_actual = votes/can_vote,
+         .by = yeshuv
+         
+       )
+       )
+  ) |> distinct() |> 
+  select(name,SD_pct,Actual_pct = pct_actual,district) |>
+  mutate(is_outlier = SD_pct > quantile(SD_pct,0.99,na.rm = T) | 
+           Actual_pct > quantile(Actual_pct,0.99,na.rm = T)
+           )
+df.tmp |> 
+  ggplot(aes(SD_pct, Actual_pct)) + geom_point() + geom_smooth(method = 'lm',se = F) +
+    ggrepel::geom_text_repel(aes(label = ifelse(is_outlier, name,NA))) +
+  labs(title = paste('Correlation: ',round(cor(df.tmp$SD_pct,df.tmp$Actual_pct,use = 'pairwise'),3)))+
+  facet_wrap(~district, nrow = 3)

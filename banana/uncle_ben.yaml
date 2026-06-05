@@ -1,0 +1,13 @@
+---
+defaults:
+  style: "realistic, dark. urban vibes"
+  description: "A funny refernce to the famous [uncle_ben] Uncle Ben scene where he tells Peter in the car With big power comes big responsability. Only I want Unclde Ben to be portraid as using AI, either Claude Code or Gemini. And add text in hebrew: עם כח גדול באה אחריות גדולה"
+  aspect-ratio: "16:9"
+  resolution: 1K
+  n: 3
+  model: gemini-3-pro-image-preview
+  force: false
+output-dir: uncleben
+images:
+  - name: uncleben
+...

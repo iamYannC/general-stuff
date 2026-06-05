@@ -1,0 +1,98 @@
+---
+title: "test file"
+author: "test"
+format: dashboard
+server: shiny
+---
+
+```{r setup}
+#| context: setup
+library(shiny)
+library(bslib)
+library(tidyverse)
+library(glue)
+library(marquee)
+# library(ggiraph)
+theme_set(theme_classic(base_size = 12))
+
+cbs <- readxl::read_xlsx('data/yesh.xlsx')
+voting_pattern <- readxl::read_xlsx('data/voting_pattern.xlsx')
+# voting_general <- readxl::read_xlsx('data/voting_general.xlsx')
+# national_pattern <- readxl::read_xlsx('data/national_pattern.xlsx')
+source('functions.R')
+```
+
+# {.sidebar}
+```{r}
+
+# pick ID of parties from list
+
+shiny::selectInput('ids', 'Parties',multiple = T,
+              choices = unique(voting_pattern$id))
+
+```
+
+
+# Data
+
+### Settings {height=10%}
+```{r slider}
+popover(title = 'Number of cities',
+        bsicons::bs_icon("gear"),
+        sliderInput('nmax', 'Number ofcities', min=2,
+                    max=20, value=5),
+        sliderInput('pop_t',
+                    'Population threshold',
+                    min = 10, max = 1e6, value = 1e4, step = 100)
+                    )
+        
+```
+### Plot {height=90%}
+
+```{r plot}
+#| title: Central Bureau of Statistics
+shiny::plotOutput('plot')
+```
+
+
+
+# Filtered data
+```{r}
+#| title: Filtered data
+
+DT::DTOutput('data')
+
+```
+
+```{r}
+#| content: valuebox
+list(icon = 'trash',
+     value = 'red')
+
+```
+
+
+```{r server}
+#| context: server
+
+df_filtered <- reactive({
+  voting_pattern %>%
+    filter(
+           id %in% input$ids
+           )
+})
+output$data <- DT::renderDT({
+  req(input$ids)
+  df_filtered()})
+
+
+
+output$plot <- shiny::renderPlot({
+  req(input$ids)
+  plot_change_yeshuv_multy(df_filtered(),
+                           party_id = input$ids,
+                           pop_threshold = input$pop_t,
+                           n = input$nmax)
+})
+```
+

@@ -19,7 +19,7 @@ if (!exists("%||%")) `%||%` <- function(x, y) if (is.null(x)) y else x
 # Explicitly mount 'www' directory so assets load regardless of how the app is launched
 local({
   app_dir <- tryCatch(dirname(sys.frame(1L)$ofile), error = function(e) getwd())
-  www_dir <- normalizePath(file.path(app_dir, "www"), mustWork = FALSE)
+  www_dir <- normalizePath(file.path(app_dir, "..", "www"), mustWork = FALSE)
   if (dir.exists(www_dir)) {
     shiny::addResourcePath("app_www", www_dir)
   }

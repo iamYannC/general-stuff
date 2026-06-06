@@ -90,7 +90,7 @@ plot_rewards <- function(env) {
 }
 
 plot_rewards(big_env)
-res <- solve_mdp(big_env)
+res <- solve_mdp_policy(big_env)
 plot_policy(res,1)
 print_grid(res,"policy")
 traj <- rollout(res)

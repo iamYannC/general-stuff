@@ -1,8 +1,7 @@
 # MDP Grid World
+A fun toy project written with Claude. My attempt to adjust Python scripts and frameworks for MDP and RL in general I found on the web into a structured framework in R. Supports value iteration, policy iteration and k-collectable rewards.
 
-A deterministic grid-world MDP framework in R. Supports value iteration, policy iteration, k-collectable rewards, trap cells, and policy design utilities.
-
-All coordinates are **1-indexed**, `c(row, col)`, origin at **top-left**.
+origin at **top-left**.
 
 ```r
 source("mdp_gridworld.R")
@@ -26,7 +25,7 @@ source("mdp_gridworld.R")
 
 ### `make_env()`
 
-Always the first call. Defines grid dimensions, agent positions, and global cost parameters.
+Always the first call. Defines grid dimensions, agent positions (start & terminal), and global cost parameters.
 
 | Parameter | Default | Description |
 |---|---|---|
@@ -34,8 +33,8 @@ Always the first call. Defines grid dimensions, agent positions, and global cost
 | `start` | — | `c(row, col)` agent starting position |
 | `terminal` | — | `c(row, col)` absorbing goal. `V = 0` by definition |
 | `step_cost` | `-1` | Cost applied on every valid move |
-| `wall_reward` | `-Inf` | Reward for attempting an out-of-bounds move. Agent stays in place. Keep below `step_cost` to prevent wall-hugging |
-| `gamma` | `1.0` | Discount factor `(0, 1]`. Use `< 1` with repeatable rewards (`k > 1`) |
+| `wall_reward` | `-Inf` | Reward for attempting an out-of-bounds move. Agent stays in place. |
+| `gamma` | `0.95` | Discount factor `(0, 1]`. Use `< 1` with repeatable rewards (`k > 1`) |
 
 ```r
 env <- make_env(

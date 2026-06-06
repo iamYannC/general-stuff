@@ -189,14 +189,6 @@ Simulates the greedy policy from start to terminal. Returns one row per step.
 
 ```r
 traj <- rollout(res_vi)
-print(traj)
-
-# verify: disc_cum_reward at last row == V*(start)
-start_sid <- lookup_state(res_vi$states, env$start[1], env$start[2], c(k1=0))
-all.equal(
-  tail(traj$disc_cum_reward, 1),
-  res_vi$V[as.character(start_sid)]
-)
 ```
 
 ---
@@ -211,14 +203,9 @@ Faceted ggplot showing policy evolution across iterations. Tiles are coloured by
 | `counters` | `NULL` | Counter slice to display. Defaults to all zeros |
 
 ```r
-p <- plot_policy(res_vi, max_facets = 6)
-print(p)
-
-# save to disk
-dir.create("assets", showWarnings = FALSE)
-ggplot2::ggsave("assets/policy_evolution.png", p, width = 14, height = 8, dpi = 150)
+plot_policy(res_vi)
 ```
-
+![Policy evolution](assets/policy_evolution.png)
 ---
 
 ### `plot_rewards()`

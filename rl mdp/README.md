@@ -125,9 +125,9 @@ Policy iteration. Alternates between full policy evaluation (inner loop until co
 res_vi <- solve_mdp_value(env)
 res_pi <- solve_mdp_policy(env)
 
-# V* at start should match across solvers
-res_vi$V["1"]
-res_pi$V["1"]
+# Policy and Value iteration are completley identical for the same problem, throught the entire state space (128, in this case).
+> all(res_pi$V == res_vi$V)
+[1] TRUE
 ```
 
 ---

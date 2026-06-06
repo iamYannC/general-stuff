@@ -15,7 +15,7 @@ env1 <- make_env(
   gamma       = 0.9
 )
 
-res1 <- solve_mdp(env1)
+res1 <- solve_mdp_value(env1)
 
 cat("\nIterations to converge:", res1$n_iter, "— expect < 10\n")
 
@@ -68,7 +68,7 @@ env2a <- make_env(
 ) |>
   add_reward(pos = c(3, 1), value = 10, k = 1)
 
-res2a <- solve_mdp(env2a)
+res2a <- solve_mdp_value(env2a)
 
 cat("\nIterations to converge:", res2a$n_iter, "\n")
 print_grid(res2a, "V",      counters = c(k1=0L))
@@ -110,7 +110,7 @@ env2b <- make_env(
 ) |>
   add_reward(pos = c(3, 1), value = 1.5, k = 1)
 
-res2b <- solve_mdp(env2b)
+res2b <- solve_mdp_value(env2b)
 
 cat("\nIterations to converge:", res2b$n_iter, "\n")
 print_grid(res2b, "V",      counters = c(k1=0L))
@@ -164,7 +164,7 @@ env3 <- make_env(
 ) |>
   add_reward(pos = c(2, 2), value = 5, k = 2)
 
-res3 <- solve_mdp(env3)
+res3 <- solve_mdp_value(env3)
 
 cat("\nIterations to converge:", res3$n_iter, "\n")
 
@@ -216,7 +216,7 @@ env4 <- make_env(
 ) |>
   add_reward(pos = c(2, 2), value = 1.71, k = 2)
 
-res4 <- solve_mdp(env4)
+res4 <- solve_mdp_value(env4)
 
 cat("\nIterations to converge:", res4$n_iter, "\n")
 

@@ -304,7 +304,7 @@ In minimum_reward(env) :
 # env without reward - supply position manually
 minimum_reward(env_no_reward, reward_pos = c(1, 4)) # identical output as with the reward.
 ```
-Since we set the reward to the same location as in `env$rewards[[1]]`, $(4,1)$, the output is identical, other than the last `Current v`.
+Since we set the reward to the same location as in `env$rewards[[1]]`, $(1,4)$, the output is identical, other than the last `Current v`.
 ---
 
 ## 5. Complete workflow

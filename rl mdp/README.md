@@ -18,6 +18,7 @@ source("mdp_gridworld.R")
 5. [Complete workflow](#5-complete-workflow)
 6. [Comparing solvers](#6-comparing-solvers)
 7. [Design notes](#7-design-notes)
+8. [Final thoughts](#8-final-thoughts)
 
 ---
 
@@ -373,7 +374,7 @@ cat("Policy iteration:", res_pi$n_iter, "improvement steps\n")
 
 **Wall reward.** Default `-Inf`. I think i'll hide it. it's pointless. It can cause infinite loops of hitting the wall, like in [Olds & Milner, 1954](https://psycnet.apa.org/record/1955-06866-001).
 
-## Final thoughts
+## 8. Final thoughts
 Much of the actual code was written with AI (mostly CC). I enjoyed toying with this grid-search example, especially with finding the minimum rewards required to make it worth for the agent/learner to make the detour. I would love in the future to implement more advanced solvers, such as Q learning with Deep Quality networks (Q-quality: an off-policy solver that allows us to extract both the optimal value and policy).
 
 feel free to copy and do whatever. it's not even under MIT. It'd be nice if you let me know though..

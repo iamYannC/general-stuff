@@ -29,9 +29,9 @@ Always the first call. Defines grid dimensions, agent positions (start & termina
 
 | Parameter | Default | Description |
 |---|---|---|
-| `rows`, `cols` | — | Grid dimensions |
-| `start` | — | `c(row, col)` agent starting position |
-| `terminal` | — | `c(row, col)` absorbing goal. `V = 0` by definition |
+| `rows`, `cols` | - | Grid dimensions |
+| `start` | - | `c(row, col)` agent starting position |
+| `terminal` | - | `c(row, col)` absorbing goal. `V = 0` by definition |
 | `step_cost` | `-1` | Cost applied on every valid move |
 | `wall_reward` | `-Inf` | Reward for attempting an out-of-bounds move. Agent stays in place. |
 | `gamma` | `0.95` | Discount factor `(0, 1]`. Use `< 1` with repeatable rewards (`k > 1`) |
@@ -55,8 +55,8 @@ Attaches a collectable bonus to a cell. Chain multiple calls for multiple reward
 
 | Parameter | Default | Description |
 |---|---|---|
-| `pos` | — | `c(row, col)` cell location |
-| `value` | — | Reward on collection. Net transition reward = `step_cost + value` |
+| `pos` | - | `c(row, col)` cell location |
+| `value` | - | Reward on collection. Net transition reward = `step_cost + value` |
 | `k` | `1` | Max collections. Each finite `k` adds a counter dimension to the state space: a cell with `k=3` contributes 4 counter states (0–3) |
 
 ```r
@@ -69,12 +69,12 @@ env <- env |>
 
 ### `add_trap()`
 
-Marks a cell as a trap. Stepping on it teleports the agent to `dest`. Collection counters are **preserved** — the agent keeps what it collected. Step cost applies; an optional `reward` stacks on top.
+Marks a cell as a trap. Stepping on it teleports the agent to `dest`. Collection counters are **preserved** - the agent keeps what it collected. Step cost applies; an optional `reward` stacks on top.
 
 | Parameter | Default | Description |
 |---|---|---|
-| `pos` | — | `c(row, col)` trap location |
-| `dest` | — | `c(row, col)` teleport destination. Must differ from `pos` |
+| `pos` | - | `c(row, col)` trap location |
+| `dest` | - | `c(row, col)` teleport destination. Must differ from `pos` |
 | `reward` | `0` | Extra reward on trap trigger, on top of `step_cost` |
 
 ```r
@@ -86,7 +86,7 @@ env <- env |>
 
 ## 2. Solvers
 
-Both solvers accept the same `env` and return an **identical output schema** — results are directly comparable.
+Both solvers accept the same `env` and return an **identical output schema** - results are directly comparable.
 
 ### `solve_mdp_value()`
 
@@ -141,7 +141,7 @@ Prints `V` or `policy` as a console matrix for a specific counter slice.
 | Parameter | Default | Description |
 |---|---|---|
 | `what` | `"V"` | `"V"` or `"policy"` |
-| `counters` | `NULL` (all zeros) | e.g. `c(k1=1, k2=0)` — slice after collecting reward 1 once |
+| `counters` | `NULL` (all zeros) | e.g. `c(k1=1, k2=0)` - slice after collecting reward 1 once |
 
 ```r
 print_grid(res_vi, "V")
@@ -322,8 +322,7 @@ env <- make_env(
   gamma       = 0.95
 ) |>
   add_reward(pos = c(1, 4), value = 5, k = 3) |>
-  add_reward(pos = c(2, 2), value = 1, k = 1) |>
-  add_trap(  pos = c(3, 3), dest = c(4, 1))
+  add_reward(pos = c(2, 2), value = 1, k = 1)
 
 # 2. Visualise reward layout
 plot_rewards(env)
@@ -335,21 +334,18 @@ res <- solve_mdp_value(env)
 # 4. Inspect
 print_grid(res, "V",      counters = c(k1=0, k2=0))
 print_grid(res, "policy", counters = c(k1=0, k2=0))
-print_grid(res, "policy", counters = c(k1=3, k2=1))  # fully collected
+print_grid(res, "policy", counters = c(k1=3, k2=1))  # fully collected, agent rushes to terminal node.
 
-# 5. Simulate optimal trajectory
+# 5. Show optimal trajectory
 traj <- rollout(res)
-print(traj)
-cat("Steps to terminal:", nrow(traj), "\n")
-cat("Discounted return:", tail(traj$disc_cum_reward, 1), "\n")
+cat("Steps to terminal:", nrow(traj))
 
-# 6. Policy evolution plot
-p <- plot_policy(res, max_facets = 6, counters = c(k1=0, k2=0))
-ggplot2::ggsave("assets/policy_evolution.png", p, width = 14, height = 8, dpi = 150)
+# 6. Policy evolution plot, before collecting any rewards. 0 is the default, but I explicitly set them here. you can easily observe how the policy changes by simply modifying k1 and k2.
+plot_policy(res, max_facets = 6, counters = c(k1=0, k2=0))
 
 # 7. Reward design
-minimum_reward(env)
-breakeven_value(res, pos = c(1,3), k_current = 1, collect_pos = c(1,4))
+minimum_reward(env) # using the unsolved environemnt to calculate minimum reward.
+breakeven_value(res, pos = c(1,3), k_current = 1, collect_pos = c(1,4)) # using the already solved results and takes different states of k times collected reward.
 ```
 
 ---
@@ -365,49 +361,20 @@ res_pi <- solve_mdp_policy(env)
 # iterations
 cat("Value iteration: ", res_vi$n_iter, "sweeps\n")
 cat("Policy iteration:", res_pi$n_iter, "improvement steps\n")
-
-# V* must match
-start_sid <- lookup_state(res_vi$states, env$start[1], env$start[2], c(k1=0, k2=0))
-cat("V*(start) — VI:", round(res_vi$V[as.character(start_sid)], 6), "\n")
-cat("V*(start) — PI:", round(res_pi$V[as.character(start_sid)], 6), "\n")
-
-# policy must match (modulo ties)
-all(res_vi$policy == res_pi$policy, na.rm = TRUE)
-
-# convergence curves side by side
-dplyr::bind_rows(
-  res_vi$history_tbl |> dplyr::mutate(solver = "value"),
-  res_pi$history_tbl |> dplyr::mutate(solver = "policy")
-) |>
-  dplyr::group_by(solver, iter) |>
-  dplyr::summarise(delta = dplyr::first(delta), .groups = "drop") |>
-  ggplot2::ggplot(ggplot2::aes(x = iter, y = delta, colour = solver)) +
-  ggplot2::geom_line() +
-  ggplot2::scale_y_log10() +
-  ggplot2::theme_minimal() +
-  ggplot2::labs(title = "VI vs PI convergence", x = "Iteration", y = "Delta (log)")
 ```
 
 ---
 
 ## 7. Design notes
 
-**State encoding.** State = `(row, col, k1, k2, ...)`. Each finite-k reward adds one counter dimension. State count = `rows × cols × (K1+1) × (K2+1) × ...`. A 4×4 grid with two rewards at k=3 and k=1 gives `4×4×4×2 = 128` states — tractable for value iteration.
+**State encoding.** State = `(row, col, k1, k2, ...)`. Each k reward adds one counter dimension (for k=0, k=1, k=2.., k=n). State count = `rows × cols × (K1+1) × (K2+1) × ...`. A 4×4 grid with two rewards at k=3 and k=1 gives `4×4×4×2 = 128` states.
 
-**Trap semantics.** Counters are always preserved through a trap. The trap only changes position, not collection history. Step cost always applies on trap entry; `trap$reward` stacks on top.
+**Traps.** Let's just not use it for now.
 
-**Wall reward.** Keep `wall_reward < step_cost`. With `gamma < 1`, even a slightly positive wall reward can become locally optimal because `Q(wall) = wall_reward + gamma * V(s)` and `gamma * V(s)` is discounted. Default `-Inf` prevents this unconditionally.
+**Wall reward.** Default `-Inf`. I think i'll hide it. it's pointless. It can cause infinite loops of hitting the wall, like in [Olds & Milner, 1954](https://psycnet.apa.org/record/1955-06866-001).
 
-**Tie-breaking.** When actions tie on Q-value, the first in `c("up","down","left","right")` wins. `V*` is always exact; treat tied arrows as arbitrary. Use Q-value debug to inspect ties:
-```r
-sid <- lookup_state(res$states, 1, 2, c(k1=1))
-for (a in c("up","down","left","right")) {
-  tr  <- transition(env, res$states, sid, a)
-  val <- tr$reward + env$gamma * res$V[as.character(tr$next_id)]
-  cat(sprintf("%s: Q=%.6f\n", a, val))
-}
-```
+## Final thoughts
+Much of the actual code was written with AI (mostly CC). I enjoyed toying with this grid-search example, especially with finding the minimum rewards required to make it worth for the agent/learner to make the detour. I would love in the future to implement more advanced solvers, such as Q learning with Deep Quality networks (Q-quality: an off-policy solver that allows us to extract both the optimal value and policy).
 
-**`minimum_reward()` limitations.** Analytical, k=1 only, assumes Manhattan-distance paths. Does not account for traps or obstacles on the detour path. For k>1 or complex topologies, use empirical binary search instead.
-
-**`lookup_state()` scaling.** Uses linear scan — fine up to ~10×10 grids with a few reward counters. Beyond that, replace with a pre-built hash index.
+feel free to copy and do whatever. it's not even under MIT. It'd be nice if you let me know though..
+Yann

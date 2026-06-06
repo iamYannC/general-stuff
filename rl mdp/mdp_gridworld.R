@@ -583,7 +583,7 @@ resolve_counters <- function(states, counters = NULL) {
 #' Indexing is explicit: each cell (r,c) is looked up directly from the state
 #' tibble. No matrix fill-order assumptions.
 #'
-#' @param result    Output of solve_mdp()
+#' @param result    Output of solve_mdp_value()
 #' @param what      "V" or "policy"
 #' @param counters  Named integer vector specifying counter values to slice,
 #'                  e.g. c(k1=1L, k2=0L). Defaults to all zeros.
@@ -646,7 +646,7 @@ print_grid <- function(result, what = "V", counters = NULL) {
 #' Follows result$policy step by step, recording every transition.
 #' Stops when terminal is reached or max_steps is exceeded.
 #'
-#' @param result    Output of solve_mdp()
+#' @param result    Output of solve_mdp_value()
 #' @param max_steps Safety cap - prevents infinite loops if policy is cyclic
 #'
 #' @return A data.frame with one row per step:
@@ -712,11 +712,11 @@ rollout <- function(result, max_steps = 1000) {
 #' Run multiple MDP experiments and return unified results
 #'
 #' @param experiments Named list of environments e.g. list(baseline = env1, trap = env2)
-#' @param theta       Convergence threshold passed to solve_mdp()
-#' @param max_iter    Max iterations passed to solve_mdp()
+#' @param theta       Convergence threshold passed to solve_mdp_value()
+#' @param max_iter    Max iterations passed to solve_mdp_value()
 #'
 #' @return list with:
-#'   $results       - named list of solve_mdp() outputs, one per experiment
+#'   $results       - named list of solve_mdp_value() outputs, one per experiment
 #'   $summary       - tibble with one row per experiment: name, n_iter, n_states,
 #'                    start_value, final_delta
 #'   $history_tbl   - unified long tibble with experiment column prepended
@@ -725,7 +725,7 @@ run_experiments <- function(experiments, theta = 1e-6, max_iter = 1000) {
  
   results <- lapply(names(experiments), function(nm) {
     message(sprintf("\n--- Running: %s ---", nm))
-    solve_mdp(experiments[[nm]], theta = theta, max_iter = max_iter)
+    solve_mdp_value(experiments[[nm]], theta = theta, max_iter = max_iter)
   })
   names(results) <- names(experiments)
 
@@ -774,7 +774,7 @@ summary_tbl <- do.call(rbind, lapply(names(results), function(nm) {
 
 #' Plot policy evolution for specific iterations
 #'
-#' @param result Output list from solve_mdp()
+#' @param result Output list from solve_mdp_value()
 #' @param max_facets Maximum number of intermediate iteration plots to display (including final)
 #' @param counters Named integer vector specifying counter values to slice,
 #'                 e.g. c(k1=1L, k2=0L). Defaults to all zeros.
@@ -892,32 +892,39 @@ plot_rewards <- function(env) {
     )
 }
 
-breakeven_value <- function(result, pos, k_current, collect_pos,
-                            return_path_steps = 2) {
-  # V at collect_pos when counter is at k_current + 1 (post collection, exhausted)
-  env     <- result$env
-  states  <- result$states
-  k_cols  <- grep("^k[0-9]+$", names(states), value = TRUE)
+breakeven_value <- function(result, pos, k_current, collect_pos) {
+  env    <- result$env
+  states <- result$states
+  k_cols <- grep("^k[0-9]+$", names(states), value = TRUE)
 
-  # build counters for post-collection state
-  counters_after        <- setNames(rep(0L, length(k_cols)), k_cols)
-  counters_after["k1"]  <- as.integer(k_current + 1L)
+  # find which reward index matches collect_pos
+  reward_idx <- which(sapply(env$rewards, function(rw) {
+    rw$pos[1] == collect_pos[1] && rw$pos[2] == collect_pos[2]
+  }))
+
+  if (length(reward_idx) != 1L) {
+    stop(sprintf("No reward found at (%d,%d).", collect_pos[1], collect_pos[2]))
+  }
+
+  k_col <- paste0("k", reward_idx)
+
+  # build counters: all zero except the target counter = k_current + 1
+  counters_after          <- setNames(rep(0L, length(k_cols)), k_cols)
+  counters_after[k_col]   <- as.integer(k_current + 1L)
 
   sid_after <- lookup_state(states, collect_pos[1], collect_pos[2], counters_after)
   V_after   <- result$V[as.character(sid_after)]
 
-  # breakeven: v + gamma * V_after > 0  (the -1 cancels on both sides)
-  # v > -gamma * V_after
   breakeven <- -env$gamma * V_after
+
   cat(
-  "V(", collect_pos[1], ",", collect_pos[2], ") at k1=", k_current + 1L, 
-  " (post-collect): ", round(V_after, 4), "\n",
-  "Breakeven value: v > ", round(breakeven, 4), "\n", 
-  sep = ""
-)
+    "V(", collect_pos[1], ",", collect_pos[2], ") at ", k_col, "=", k_current + 1L,
+    " (post-collect): ", round(V_after, 4), "\n",
+    "Breakeven value: v > ", round(breakeven, 4), "\n",
+    sep = ""
+  )
   invisible(breakeven)
 }
-
 
 #' Compute the minimum reward value that makes a detour worthwhile
 #'
@@ -981,7 +988,7 @@ minimum_reward <- function(env, reward_pos = NULL) {
     gamma       = env$gamma
   )
 
-  res_base  <- solve_mdp(env_base, theta = 1e-8)
+  res_base  <- solve_mdp_value(env_base, theta = 1e-8)
   sid_start <- lookup_state(
     res_base$states,
     env$start[1], env$start[2],

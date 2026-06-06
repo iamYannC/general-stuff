@@ -213,12 +213,10 @@ plot_policy(res_vi)
 Static plot of the reward matrix. Shows step cost everywhere, with reward cells highlighted by their net collection value.
 
 ```r
-p <- plot_rewards(env)
-print(p)
-
-ggplot2::ggsave("assets/reward_matrix.png", p, width = 8, height = 6, dpi = 150)
+plot_rewards(env)
+# Note that the rewards matrix can be ploted prior to solving the policy!
 ```
-
+![Reward Matrix](assets/reward_matrix.png)
 ---
 
 ### `run_experiments()`
@@ -226,27 +224,33 @@ ggplot2::ggsave("assets/reward_matrix.png", p, width = 8, height = 6, dpi = 150)
 Batch-solves a named list of environments with `solve_mdp_value()` and returns unified results.
 
 ```r
+env_no_reward <- make_env(
+    rows = 4, cols = 4,
+    start    = c(4, 1),
+    terminal = c(1, 1),
+    step_cost   = -1,
+    wall_reward = -Inf,
+    gamma       = 0.95
+  )
+
 exp <- run_experiments(list(
   baseline = env_no_reward,
   with_reward = env
 ))
 
 exp$summary
-#   experiment   n_states n_iter start_value final_delta
-#   baseline           16      6      -3.000           0
-#   with_reward        64     14       5.561           0
+# experiment  n_states n_iter start_value final_delta
+# <chr>          <int>  <int>       <dbl>       <dbl>
+# baseline          16      7       -2.85           0
+# with_reward      128     14       -1.53           0
 
-# convergence comparison
-exp$history_tbl |>
-  dplyr::group_by(experiment, iter) |>
-  dplyr::summarise(delta = dplyr::first(delta), .groups = "drop") |>
-  ggplot2::ggplot(ggplot2::aes(x = iter, y = delta, colour = experiment)) +
-  ggplot2::geom_line() +
-  ggplot2::scale_y_log10() +
-  ggplot2::theme_minimal() +
-  ggplot2::labs(title = "Convergence", x = "Iteration", y = "Max delta (log)")
+# example - convergence comparison
+  exp$history_tbl |>
+  reframe(delta = first(delta), .by = c(experiment, iter)) |>
+  ggplot(aes(x = iter, y = delta, colour = experiment)) +
+  geom_line(linewidth = 3) # + .....
 ```
-
+![Experiment Comparison](assets/compare_experiments.png)
 ---
 
 ## 4. Utilities

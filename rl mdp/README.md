@@ -377,4 +377,4 @@ cat("Policy iteration:", res_pi$n_iter, "improvement steps\n")
 Much of the actual code was written with AI (mostly CC). I enjoyed toying with this grid-search example, especially with finding the minimum rewards required to make it worth for the agent/learner to make the detour. I would love in the future to implement more advanced solvers, such as Q learning with Deep Quality networks (Q-quality: an off-policy solver that allows us to extract both the optimal value and policy).
 
 feel free to copy and do whatever. it's not even under MIT. It'd be nice if you let me know though..
-Yann
+Yann ❤

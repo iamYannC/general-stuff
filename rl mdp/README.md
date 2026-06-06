@@ -254,20 +254,23 @@ exp$summary
 ---
 
 ## 4. Utilities
+*`breakeven_value` and `minimum_reward` should probably be unified to a single function.*
 
 ### `breakeven_value()`
 
-Given a solved result and a reward cell, computes the minimum reward value that makes **re-collecting** worthwhile from the current position.
+Given a solved result and a reward cell, computes the minimum reward value that makes **re-collecting** worthwhile from the current position (`pos`).
 
 ```r
-# is it worth collecting (2,2) a second time?
+# is it worth collecting (2,2) a second time? It's value is 2.
 breakeven_value(res_vi, pos = c(1,2), k_current = 1, collect_pos = c(2,2))
 
-# V(2,2) at k1=2 (post-collect): -1.9000
-# Breakeven value: v > 1.7100
+# V(2,2) at k2=2 (post-collect): -0.6715
+# Breakeven value: v > 0.638
 ```
-
-Use this to set the precise threshold between one and two collections for a given gamma and grid topology.
+This function generalizes to a practical decision-making question:
+given an environment with known costs, grid size etc..., what is the minimum reward a rational agent must be offered to make a detour - or a return visit - worthwhile?
+Setting `value` just above the breakeven threshold is the most resource-efficient incentive design.
+For all of you econ folks out there...
 
 ---
 
@@ -277,7 +280,10 @@ Computes the minimum reward value that makes a **detour to the reward cell worth
 
 Reads all parameters from `env`. If `env$rewards` is empty, supply `reward_pos` explicitly.
 
-**Assumptions:** k=1 only; Manhattan-distance paths (no obstacles). Warns on multiple rewards (uses first) or k > 1.
+**Assumptions:** k=1 only; Manhattan-distance paths (no `add_trap`). Warns on multiple rewards (uses first) or k > 1. 
+A somewhat safer version of `breakeven_value()`.
+
+**Thoughts:** The only nice feature this functions offers on top of the more general `breakeven_value()` is testing rewards that aren't embeded in `env$reward`. This allows to a-priori test different rewards from the starting point.
 
 ```r
 # env with reward already configured
@@ -289,11 +295,14 @@ minimum_reward(env)
 # Gamma:         0.95
 # V_direct:      -2.8550
 # d (to reward): 6 steps
-# Min reward:    v > 4.2100
-# Current v:     5.0000  =>  worthwhile ✓
+# Min reward:    v >  6.1795
+# Current v:     5  =>  not worthwhile ✗
+Warning message:
+In minimum_reward(env) :
+  env contains 2 rewards. Only the first reward at (1,4) is used. 
 
-# env without reward — supply position manually
-minimum_reward(env_no_reward, reward_pos = c(1, 4))
+# env without reward - supply position manually
+minimum_reward(env_no_reward, reward_pos = c(1, 4)) # Since we set the reward to the same location as in `env$rewards[[1]]`, the output is identical, other than the last `Current v`.
 ```
 
 ---

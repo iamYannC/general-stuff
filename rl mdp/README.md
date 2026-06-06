@@ -141,18 +141,18 @@ Prints `V` or `policy` as a console matrix for a specific counter slice.
 | Parameter | Default | Description |
 |---|---|---|
 | `what` | `"V"` | `"V"` or `"policy"` |
-| `counters` | `NULL` (all zeros) | e.g. `c(k1=1L, k2=0L)` — slice after collecting reward 1 once |
+| `counters` | `NULL` (all zeros) | e.g. `c(k1=1, k2=0)` — slice after collecting reward 1 once |
 
 ```r
 print_grid(res_vi, "V")
 print_grid(res_vi, "policy")
 
 # after collecting reward 1 twice:
-print_grid(res_vi, "policy", counters = c(k1=2L))
+print_grid(res_vi, "policy", counters = c(k1=2))
 ```
 
 ```
-=== policy (counters: k1=0) ===
+=== policy (counters: k1=2) ===
      [,1]  [,2]  [,3]  [,4]
 [1,] ★     left  left  left
 [2,] up    up    up    up
@@ -188,7 +188,7 @@ traj <- rollout(res_vi)
 print(traj)
 
 # verify: disc_cum_reward at last row == V*(start)
-start_sid <- lookup_state(res_vi$states, env$start[1], env$start[2], c(k1=0L))
+start_sid <- lookup_state(res_vi$states, env$start[1], env$start[2], c(k1=0))
 all.equal(
   tail(traj$disc_cum_reward, 1),
   res_vi$V[as.character(start_sid)]
@@ -266,7 +266,7 @@ Given a solved result and a reward cell, computes the minimum reward value that 
 
 ```r
 # is it worth collecting (2,2) a second time?
-breakeven_value(res_vi, pos = c(1,2), k_current = 1L, collect_pos = c(2,2))
+breakeven_value(res_vi, pos = c(1,2), k_current = 1, collect_pos = c(2,2))
 
 # V(2,2) at k1=2 (post-collect): -1.9000
 # Breakeven value: v > 1.7100
@@ -329,9 +329,9 @@ res <- solve_mdp_value(env)
 # Converged in 14 iterations (delta = 0.00e+00)
 
 # 4. Inspect
-print_grid(res, "V",      counters = c(k1=0L, k2=0L))
-print_grid(res, "policy", counters = c(k1=0L, k2=0L))
-print_grid(res, "policy", counters = c(k1=3L, k2=1L))  # fully collected
+print_grid(res, "V",      counters = c(k1=0, k2=0))
+print_grid(res, "policy", counters = c(k1=0, k2=0))
+print_grid(res, "policy", counters = c(k1=3, k2=1))  # fully collected
 
 # 5. Simulate optimal trajectory
 traj <- rollout(res)
@@ -340,12 +340,12 @@ cat("Steps to terminal:", nrow(traj), "\n")
 cat("Discounted return:", tail(traj$disc_cum_reward, 1), "\n")
 
 # 6. Policy evolution plot
-p <- plot_policy(res, max_facets = 6, counters = c(k1=0L, k2=0L))
+p <- plot_policy(res, max_facets = 6, counters = c(k1=0, k2=0))
 ggplot2::ggsave("assets/policy_evolution.png", p, width = 14, height = 8, dpi = 150)
 
 # 7. Reward design
 minimum_reward(env)
-breakeven_value(res, pos = c(1,3), k_current = 1L, collect_pos = c(1,4))
+breakeven_value(res, pos = c(1,3), k_current = 1, collect_pos = c(1,4))
 ```
 
 ---
@@ -363,7 +363,7 @@ cat("Value iteration: ", res_vi$n_iter, "sweeps\n")
 cat("Policy iteration:", res_pi$n_iter, "improvement steps\n")
 
 # V* must match
-start_sid <- lookup_state(res_vi$states, env$start[1], env$start[2], c(k1=0L, k2=0L))
+start_sid <- lookup_state(res_vi$states, env$start[1], env$start[2], c(k1=0, k2=0))
 cat("V*(start) — VI:", round(res_vi$V[as.character(start_sid)], 6), "\n")
 cat("V*(start) — PI:", round(res_pi$V[as.character(start_sid)], 6), "\n")
 
@@ -396,7 +396,7 @@ dplyr::bind_rows(
 
 **Tie-breaking.** When actions tie on Q-value, the first in `c("up","down","left","right")` wins. `V*` is always exact; treat tied arrows as arbitrary. Use Q-value debug to inspect ties:
 ```r
-sid <- lookup_state(res$states, 1, 2, c(k1=1L))
+sid <- lookup_state(res$states, 1, 2, c(k1=1))
 for (a in c("up","down","left","right")) {
   tr  <- transition(env, res$states, sid, a)
   val <- tr$reward + env$gamma * res$V[as.character(tr$next_id)]

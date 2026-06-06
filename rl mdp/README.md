@@ -147,17 +147,21 @@ Prints `V` or `policy` as a console matrix for a specific counter slice.
 print_grid(res_vi, "V")
 print_grid(res_vi, "policy")
 
-# after collecting reward 1 twice:
-print_grid(res_vi, "policy", counters = c(k1=2))
+# after collecting reward 2 three times:
+print_grid(res_vi, "policy", counters = c(k2=3))
 ```
 
 ```
-=== policy (counters: k1=2) ===
-     [,1]  [,2]  [,3]  [,4]
-[1,] ★     left  left  left
-[2,] up    up    up    up
-[3,] up    up    up    up
-[4,] up    up    right up
+
+=== policy (counters: k1=0, k2=3) ===
+     [,1] [,2]  [,3]  [,4]
+[1,] ★    right right down
+[2,] up   up    up    up  
+[3,] up   up    up    up  
+[4,] up   up    right up  
+
+# Note that reward 1 is infered automatically and set to 0. 
+# Reminder: it's located at (1,4) with value of 5 and is collectable once.
 ```
 
 ---

@@ -31,8 +31,8 @@
 #'
 #' @param rows         Number of rows
 #' @param cols         Number of columns
-#' @param start        c(row, col) — agent start position, 1-indexed
-#' @param terminal     c(row, col) — absorbing goal state, V = 0
+#' @param start        c(row, col) - agent start position, 1-indexed
+#' @param terminal     c(row, col) - absorbing goal state, V = 0
 #' @param step_cost    Reward applied on every valid transition
 #' @param wall_reward  Reward for an out-of-bounds attempt. Agent stays in place.
 #'                     Must be < step_cost to avoid wall-hitting being optimal.
@@ -44,7 +44,7 @@ make_env <- function(rows, cols,
                      terminal,
                      step_cost   = -1,
                      wall_reward = -Inf,
-                     gamma       = 1.0) {
+                     gamma       = 0.95) {
   stopifnot(
     is.numeric(rows), rows >= 1,
     is.numeric(cols), cols >= 1,
@@ -93,8 +93,8 @@ add_reward <- function(env, pos, value, k = 1L) {
 #' step_cost still applies. trap$reward is added on top.
 #'
 #' @param env             Output of make_env() or add_reward()
-#' @param pos             c(row, col) — trap location
-#' @param dest            c(row, col) — teleport destination. Must differ from pos.
+#' @param pos             c(row, col) - trap location
+#' @param dest            c(row, col) - teleport destination. Must differ from pos.
 #' @param reward          Extra reward on top of step_cost when trap triggers
 #'
 #' @return Updated env
@@ -118,14 +118,14 @@ add_trap <- function(env, pos, dest, reward = 0) {
 #'
 #' State = (row, col, k1, k2, ...) where ki in 0..Ki for each reward.
 #' Rows are ordered by (row, col, k1, k2, ...) and state_id is a simple
-#' integer sequence — 1-based, no gaps.
+#' integer sequence - 1-based, no gaps.
 #'
 #' @param env  Output of make_env() + add_reward() calls
 #'
 #' @return A tibble with columns: row, col, [k1, k2, ...], state_id
 build_state_space <- function(env) {
 
-  # position grid — all (row, col) combinations
+  # position grid - all (row, col) combinations
   pos_grid <- expand.grid(
     row = seq_len(env$rows),
     col = seq_len(env$cols),
@@ -183,9 +183,9 @@ lookup_state <- function(states, row, col, counters) {
 #' Compute one transition: (state, action) -> (next_state_id, reward)
 #'
 #' Precedence inside the function:
-#'   1. wall check  — if out of bounds, stay and return wall_reward
-#'   2. trap check  — teleport before reward collection
-#'   3. reward check — collect if counter < k
+#'   1. wall check  - if out of bounds, stay and return wall_reward
+#'   2. trap check  - teleport before reward collection
+#'   3. reward check - collect if counter < k
 #'
 #' @param env      Environment list
 #' @param states   Tibble from build_state_space()
@@ -238,7 +238,7 @@ for (trap in env$traps) {
   }
 }
 
-  # 3. reward collection — applied to landing cell (after potential teleport)
+  # 3. reward collection - applied to landing cell (after potential teleport)
   for (i in seq_along(env$rewards)) {
     rw    <- env$rewards[[i]]
     k_col <- paste0("k", i)
@@ -261,14 +261,14 @@ for (trap in env$traps) {
 #'
 #' @seealso [solve_mdp_policy()]
 #' @return named list:
-#'   $states      — state space tibble from build_state_space()
-#'   $V           — named numeric vector, keys are state_id (as character)
-#'   $policy      — named character vector, keys are state_id (as character)
-#'   $history     — list of length n_iter, each element is the states tibble
+#'   $states      - state space tibble from build_state_space()
+#'   $V           - named numeric vector, keys are state_id (as character)
+#'   $policy      - named character vector, keys are state_id (as character)
+#'   $history     - list of length n_iter, each element is the states tibble
 #'                  with V, policy, iter, delta columns appended
-#'   $history_tbl — all history snapshots bound into one long data.frame
-#'   $n_iter      — number of iterations until convergence
-#'   $env         — original env passed through
+#'   $history_tbl - all history snapshots bound into one long data.frame
+#'   $n_iter      - number of iterations until convergence
+#'   $env         - original env passed through
 solve_mdp_value <- function(env, theta = 1e-6, max_iter = 1000) {
 
   states   <- build_state_space(env)
@@ -276,7 +276,7 @@ solve_mdp_value <- function(env, theta = 1e-6, max_iter = 1000) {
   actions  <- c("up", "down", "left", "right")
   s_ids    <- states$state_id
 
-  # terminal state ids — all counter combinations at terminal position
+  # terminal state ids - all counter combinations at terminal position
   terminal_ids <- states$state_id[
     states$row == env$terminal[1] & states$col == env$terminal[2]
   ]
@@ -312,7 +312,7 @@ solve_mdp_value <- function(env, theta = 1e-6, max_iter = 1000) {
       delta <- max(delta, abs(best_val - V_old[as.character(sid)]))
     }
 
-    # snapshot — append V, policy, iter, delta to state tibble
+    # snapshot - append V, policy, iter, delta to state tibble
     snap        <- states
     snap$V      <- V[as.character(s_ids)]
     snap$policy <- policy[as.character(s_ids)]
@@ -361,16 +361,16 @@ solve_mdp_value <- function(env, theta = 1e-6, max_iter = 1000) {
 #' @param verbose      If TRUE, prints convergence message
 #'
 #' @seealso [solve_mdp_value()]
-#' @return Named list — identical schema to solve_mdp_value():
-#'   $states        — state space tibble from build_state_space()
-#'   $V             — named numeric vector, keys are state_id (as character)
-#'   $policy        — named character vector, keys are state_id (as character)
-#'   $history       — list of per-improvement-step snapshots, each is the states
+#' @return Named list - identical schema to solve_mdp_value():
+#'   $states        - state space tibble from build_state_space()
+#'   $V             - named numeric vector, keys are state_id (as character)
+#'   $policy        - named character vector, keys are state_id (as character)
+#'   $history       - list of per-improvement-step snapshots, each is the states
 #'                    tibble with V, policy, iter, delta, eval_iter,
 #'                    policy_changes columns appended
-#'   $history_tbl   — all snapshots bound into one long data.frame
-#'   $n_iter        — number of improvement steps until convergence
-#'   $env           — original env passed through
+#'   $history_tbl   - all snapshots bound into one long data.frame
+#'   $n_iter        - number of improvement steps until convergence
+#'   $env           - original env passed through
 solve_mdp_policy <- function(env,
                              theta = 1e-6,
                              max_iter = 100,
@@ -611,7 +611,7 @@ print_grid <- function(result, what = "V", counters = NULL) {
     ))
   }
 
-  # build matrix by explicit (row, col) lookup — no fill-order assumption
+  # build matrix by explicit (row, col) lookup - no fill-order assumption
   rows <- result$env$rows
   cols <- result$env$cols
   mat  <- matrix(NA_character_, nrow = rows, ncol = cols)
@@ -647,25 +647,25 @@ print_grid <- function(result, what = "V", counters = NULL) {
 #' Stops when terminal is reached or max_steps is exceeded.
 #'
 #' @param result    Output of solve_mdp()
-#' @param max_steps Safety cap — prevents infinite loops if policy is cyclic
+#' @param max_steps Safety cap - prevents infinite loops if policy is cyclic
 #'
 #' @return A data.frame with one row per step:
-#'   step          — step index
-#'   row, col      — position before action
-#'   [k1, k2, ...] — counter values before action
-#'   state_id      — state id before action
-#'   action        — action taken
-#'   reward        — reward received
-#'   cum_reward    — cumulative reward up to and including this step
-#'   next_row      — position after action
-#'   next_col      — position after action
+#'   step          - step index
+#'   row, col      - position before action
+#'   [k1, k2, ...] - counter values before action
+#'   state_id      - state id before action
+#'   action        - action taken
+#'   reward        - reward received
+#'   cum_reward    - cumulative reward up to and including this step
+#'   next_row      - position after action
+#'   next_col      - position after action
 rollout <- function(result, max_steps = 1000) {
 
   env     <- result$env
   states  <- result$states
   k_cols  <- grep("^k[0-9]+$", names(states), value = TRUE)
 
-  # start state — all counters at zero
+  # start state - all counters at zero
   start_counters <- setNames(rep(0L, length(k_cols)), k_cols)
   sid <- lookup_state(states, env$start[1], env$start[2], start_counters)
 
@@ -716,10 +716,10 @@ rollout <- function(result, max_steps = 1000) {
 #' @param max_iter    Max iterations passed to solve_mdp()
 #'
 #' @return list with:
-#'   $results       — named list of solve_mdp() outputs, one per experiment
-#'   $summary       — tibble with one row per experiment: name, n_iter, n_states,
+#'   $results       - named list of solve_mdp() outputs, one per experiment
+#'   $summary       - tibble with one row per experiment: name, n_iter, n_states,
 #'                    start_value, final_delta
-#'   $history_tbl   — unified long tibble with experiment column prepended
+#'   $history_tbl   - unified long tibble with experiment column prepended
 run_experiments <- function(experiments, theta = 1e-6, max_iter = 1000) {
   stopifnot(is.list(experiments), !is.null(names(experiments)))
  
@@ -930,20 +930,20 @@ breakeven_value <- function(result, pos, k_current, collect_pos,
 #' For k=1 only (analytical). Use minimum_reward_k() for k > 1.
 #'
 #' @param env        Fully configured env (from make_env + optional add_reward)
-#' @param reward_pos c(row, col) override — only used when env$rewards is empty
+#' @param reward_pos c(row, col) override - only used when env$rewards is empty
 #'
 #' @return Invisibly returns a named list:
-#'   $v_min         — minimum reward to make detour worthwhile
-#'   $v_current     — current reward value in env (NA if none defined)
-#'   $worthwhile    — logical: is the current reward above v_min?
-#'   $V_direct      — value of direct path (no reward)
-#'   $d             — steps from start to reward cell
+#'   $v_min         - minimum reward to make detour worthwhile
+#'   $v_current     - current reward value in env (NA if none defined)
+#'   $worthwhile    - logical: is the current reward above v_min?
+#'   $V_direct      - value of direct path (no reward)
+#'   $d             - steps from start to reward cell
 minimum_reward <- function(env, reward_pos = NULL) {
 
   # --- resolve reward position ---
   if (length(env$rewards) > 0) {
     if (!is.null(reward_pos)) {
-      message("reward_pos argument ignored — using reward location from env config.")
+      message("reward_pos argument ignored - using reward location from env config.")
     }
     rw         <- env$rewards[[1]]
     reward_pos <- rw$pos

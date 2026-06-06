@@ -375,7 +375,7 @@ cat("Policy iteration:", res_pi$n_iter, "improvement steps\n")
 **Wall reward.** Default `-Inf`. I think i'll hide it. it's pointless. It can cause infinite loops of hitting the wall, like in [Olds & Milner, 1954](https://psycnet.apa.org/record/1955-06866-001).
 
 ## 8. Final thoughts
-Much of the actual code was written with AI (mostly CC). I enjoyed toying with this grid-search example, especially with finding the minimum rewards required to make it worth for the agent/learner to make the detour. I would love in the future to implement more advanced solvers, such as Q learning with Deep Quality networks (Q-learning: model-free, off-policy solver that learns the optimal action-value funs `Q(s,a)` by maximzing reward. It's what the cool kids do.
+Much of the actual code was written with AI (mostly CC). I enjoyed toying with this grid-search example, especially with finding the minimum rewards required to make it worth for the agent/learner to make the detour. I would love in the future to implement more advanced solvers, such as DQNs (Q-learning: model-free, off-policy solver that learns the optimal action-value funs `Q(s,a)` by maximzing reward. It's what the cool kids do.
 
 feel free to copy and do whatever. it's not even under MIT. It'd be nice if you let me know though..
 Yann ❤

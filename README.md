@@ -1,0 +1,3 @@
+# Iterations to Convergence
+The interactive Shiny application, which simulates and visualizes the number of sampling steps required for vector to converge to a single unique value via sequential random sampling with replacement, can be found [here](https://yannapps.shinyapps.io/iterations/).
+The simulation initializes with a vector of $N$ unique values, $$V_0 = \{v_1, v_2, \ldots, v_N\} \quad (N \text{ unique values})$$, updates successive states by sampling with replacement, $$V_k = \text{sample}(V_{k-1}, N, \text{replace} = TRUE)$$, and terminates at generation $K$ when absolute homogeneity is reached, $$\text{Stop at step } K \text{ when } \text{unique}(V_K) = 1$$.

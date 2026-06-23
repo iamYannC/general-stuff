@@ -13,3 +13,5 @@ files$
 *.png
 iterations/rsconnect/
 iterations/manifest.json
+
+rl mdp/mdp_gridworld_docs_files/

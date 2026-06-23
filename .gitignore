@@ -10,3 +10,6 @@ votes/votes-dashboard.qmdbanana/
 banana/
 *.html
 files$
+*.png
+iterations/rsconnect/
+iterations/manifest.json
